@@ -1,5 +1,9 @@
-import { createBrowserRouter, type RouteObject } from 'react-router'
+import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router'
 import { AppShell } from '@/components/layout/app-shell'
+import { ContentPlannerPage } from '@/features/content-planner/content-planner-page'
+import { PostDetailPage } from '@/features/social/post-detail-page'
+import { PostFormPage } from '@/features/social/post-form-page'
+import { SocialPage } from '@/features/social/social-page'
 import { LoginPage } from '@/features/auth/login-page'
 import { RequireAuth } from '@/features/auth/require-auth'
 import { ALL_NAV_ITEMS } from '@/lib/nav'
@@ -25,12 +29,21 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <OverviewPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'social', element: <SocialPage /> },
+      { path: 'social/posts/new', element: <PostFormPage /> },
+      { path: 'social/posts/:id', element: <PostDetailPage /> },
+      { path: 'social/posts/:id/edit', element: <PostFormPage /> },
+      { path: 'content-planner', element: <ContentPlannerPage /> },
       ...comingSoonRoutes,
       { path: '*', element: <NotFoundPage /> },
     ],
   },
 ]
 
+/**
+ * VITE_ROUTER_MODE=memory はURLに依存しないプレビュー用（埋め込み表示など）。
+ * 通常は URL と連動する BrowserRouter を使う。
+ */
 export function createAppRouter() {
-  return createBrowserRouter(routes)
+  return import.meta.env.VITE_ROUTER_MODE === 'memory' ? createMemoryRouter(routes) : createBrowserRouter(routes)
 }

@@ -19,8 +19,13 @@ describe('navigation', () => {
     ])
   })
 
-  it('Phase 1 で実装済みは Overview と Settings のみ', () => {
-    expect(ALL_NAV_ITEMS.filter((i) => i.status === 'available').map((i) => i.id)).toEqual(['overview', 'settings'])
+  it('実装済みは Overview・Social・Content Planner・Settings のみ（Phase 2 時点）', () => {
+    expect(ALL_NAV_ITEMS.filter((i) => i.status === 'available').map((i) => i.id)).toEqual([
+      'overview',
+      'social',
+      'content-planner',
+      'settings',
+    ])
   })
 
   it('Coming Soon の項目は Phase 2 以降で、予定機能が書かれている', () => {

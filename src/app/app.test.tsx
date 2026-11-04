@@ -16,8 +16,9 @@ describe('Supabase未接続モード', () => {
     renderApp('/')
     const nav = await screen.findByRole('navigation', { name: 'メインメニュー' })
     expect(within(nav).getByRole('link', { name: /Overview/ })).not.toHaveTextContent('Soon')
-    expect(within(nav).getByRole('link', { name: /Social/ })).toHaveTextContent('Soon')
-    expect(within(nav).getAllByText('Soon')).toHaveLength(10)
+    expect(within(nav).getByRole('link', { name: /Social/ })).not.toHaveTextContent('Soon')
+    expect(within(nav).getByRole('link', { name: /Marketing/ })).toHaveTextContent('Soon')
+    expect(within(nav).getAllByText('Soon')).toHaveLength(8)
   })
 
   it('未実装ページは Coming Soon と予定フェーズを表示する', async () => {

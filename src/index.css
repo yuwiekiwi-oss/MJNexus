@@ -125,3 +125,15 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-page { animation: none; }
 }
+
+/* グラフ用カテゴリ色（検証済み: CVD分離・コントラスト。Instagram=1, TikTok=2） */
+:root {
+  --chart-1: #4f46e5;
+  --chart-2: #0d9488;
+  --chart-grid: oklch(0.92 0.004 286);
+}
+.dark {
+  --chart-1: #7c83f0;
+  --chart-2: #14a89a;
+  --chart-grid: oklch(1 0 0 / 8%);
+}

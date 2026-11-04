@@ -5,10 +5,14 @@
 """
 
 from .data_quality import CoverageReport, coverage_report, sample_size_level
+from .kpi_catalog import KpiDefinition, get_kpi, load_catalog
 from .metrics import MetricStatus, latest_snapshot_values, safe_rate
 
 __all__ = [
     "CoverageReport",
+    "KpiDefinition",
+    "get_kpi",
+    "load_catalog",
     "MetricStatus",
     "coverage_report",
     "latest_snapshot_values",

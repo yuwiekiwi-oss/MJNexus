@@ -72,6 +72,8 @@ mj-nexus/
 │   ├── migrations/           スキーマ・RLS・ビュー（番号順に適用）
 │   ├── tests/                素のPostgreSQLで動くRLS・制約テスト
 │   └── config.toml           Supabase CLI ローカル設定（招待制）
+├── shared/kpi-catalog.json   KPIの計算式の唯一の情報源（TS・Python・AIが参照）
+├── src/demo/                 デモ表示用のサンプルデータ（VITE_DEMO_MODE=true のときだけ読み込む）
 ├── analytics/                Python 分析パッケージ（mj_analytics）+ pytest
 ├── scripts/test-db.sh        DBテストランナー
 ├── public/_headers           CSPなどのセキュリティヘッダー（Cloudflare Pages）
@@ -80,14 +82,14 @@ mj-nexus/
 └── docs/                     設計ドキュメント
 ```
 
-`features/` は機能ごとに UI・フック・型をまとめる場所です。Phase 2 以降は `features/social/`、`features/content-planner/` のように追加します。
+`features/` は機能ごとに UI・フック・型をまとめる場所です（`features/social/`、`features/content-planner/` …）。経営判断支援への拡張方針は [decision-support-design.md](decision-support-design.md) を参照してください。
 
 ## 開発フェーズ
 
 | Phase | 内容 | 状態 |
 |---|---|---|
 | 1 | 共通基盤（Vite/React/TS・デザインシステム・レイアウト・Supabase接続・Auth・DBスキーマ・RLS・テスト環境） | **実装済み** |
-| 2 | Social・Content Planner（投稿登録・指標入力・履歴・SNSダッシュボード・CSV） | 未着手 |
+| 2 | Social・Content Planner（投稿登録・指標入力・履歴・SNSダッシュボード・CSV）、施策・AI提案の受け皿 | **実装済み** |
 | 3 | Marketing（問い合わせ・体験・ファネル・チャネル別） | 未着手 |
 | 4 | Finance・Analytics（SQL集計ビュー・Python分析・KPI可視化・Tableau出力） | 未着手 |
 | 5 | AI Insights（OpenAI・Tool Calling・安全な分析ツール・AI評価） | 未着手 |

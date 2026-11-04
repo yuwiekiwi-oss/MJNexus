@@ -59,6 +59,10 @@ erDiagram
 | Finance | `revenue_transactions` / `expense_transactions` | 売上・費用（費用は唯一の台帳） |
 | Finance | `marketing_costs`（ビュー） | 費用台帳のうちマーケティング費用 |
 | AI | `ai_analysis_logs` | AIへの質問・呼んだツール・構造化回答（監査用、更新・削除不可） |
+| AI | `ai_recommendations` | AIの提案（課題・仮説・施策・提案時点の根拠データ）。作成者と admin 以上のみ閲覧（Phase 2で作成） |
+| 意思決定 | `initiatives` / `initiative_events` | 施策と実施記録・ベースライン・評価結果（Phase 2で作成） |
+| Social | `social_post_snapshot_kpis`（ビュー） | 記録時点ごとに指標を横に並べ、率を計算（Phase 2） |
+| Social | `social_post_kpis`（ビュー） | 投稿 × 最新記録時点のSNS指標。未記録の投稿も含む（Phase 2） |
 
 ## 設計判断
 
@@ -89,6 +93,10 @@ CHECK制約 `(status = 'measured') = (value is not null)` により、「未取�
 ### 3. 累積値を合計しない
 
 同じ投稿の24時間後と72時間後の再生数を足すと二重計上になります。ビュー `social_post_latest_metric_values` は、ウィンドウ関数 `row_number() over (partition by post_id, metric order by recorded_at desc)` で投稿 × 指標ごとに最新の1行だけを返します。Python側の `latest_snapshot_values()` も同じ規則で、テストで両方の結果を確認しています。
+
+### 3-2. 率は「同じ記録時点」の値どうしで計算する（Phase 2）
+
+`social_post_kpis` は、投稿ごとに **最新のスナップショット1件** の値で率を計算します。指標ごとに最新値を取る（`social_post_latest_metric_values`）と、「24時間後のいいね ÷ 7日後のリーチ」のように時点のずれた値を割ってしまうためです。実績の保存は関数 `record_post_metrics()` で行い、スナップショットと指標値を1トランザクションで保存します（1つでも不正な値があれば全体を保存しない）。
 
 ### 4. ファネルの追跡: 識別できるイベントとSNS集計値を分ける
 

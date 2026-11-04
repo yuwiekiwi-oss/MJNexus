@@ -11,6 +11,17 @@ import { UserMenu } from './user-menu'
 
 function ConnectionBanner() {
   const { state } = useAuth()
+  if (import.meta.env.VITE_DEMO_MODE === 'true') {
+    return (
+      <div className="flex items-center gap-2 border-b border-warning/30 bg-warning/10 px-4 py-2 text-xs sm:px-6">
+        <PlugZap className="size-3.5 shrink-0 text-warning" />
+        <span>
+          <strong className="font-medium">デモ表示</strong>
+          ：【サンプル】と付いた架空のデータです。実際の実績ではありません。保存・変更はできません。
+        </span>
+      </div>
+    )
+  }
   if (state.status !== 'unconfigured') return null
   return (
     <div className="flex items-center gap-2 border-b border-warning/30 bg-warning/10 px-4 py-2 text-xs sm:px-6">

@@ -4,6 +4,7 @@ import { ConnectionBadge, getConnections } from '@/components/connection-status'
 import { PageHeader } from '@/components/layout/page-header'
 import { EmptyState } from '@/components/states/states'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/features/auth/auth-context'
 import { ROLE_LABEL, useCurrentOrganization } from '@/features/organization/use-organization'
@@ -40,7 +41,12 @@ export function OverviewPage() {
         <EmptyState
           icon={<ChartLine className="size-5" />}
           title="まだ実績データがありません"
-          description="開業準備段階のため、表示できる指標はありません。Phase 2 でSNS投稿と実績の記録を開始すると、ここに集計が表示されます。架空の数値は表示しません。"
+          description="開業準備段階のため、経営指標（問い合わせ・入会・売上）はまだ未検証です。SNS投稿と実績は Social で記録でき、SNS指標はそちらのダッシュボードで確認できます。架空の数値は表示しません。"
+          action={
+            <Button asChild variant="outline" size="sm">
+              <Link to="/social">Social を開く</Link>
+            </Button>
+          }
         />
       </section>
 
@@ -87,7 +93,11 @@ export function OverviewPage() {
                       <div className="text-sm font-medium">{m.label}</div>
                       <div className="truncate text-xs text-muted-foreground">{m.description}</div>
                     </div>
-                    <Badge variant="soon">Phase {m.phase} ・ Coming Soon</Badge>
+                    {m.status === 'available' ? (
+                      <Badge variant="success">Phase {m.phase} ・ 実装済み</Badge>
+                    ) : (
+                      <Badge variant="soon">Phase {m.phase} ・ Coming Soon</Badge>
+                    )}
                   </Link>
                 </li>
               )

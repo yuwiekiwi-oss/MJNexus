@@ -2,11 +2,24 @@
 
 **School Intelligence Platform** — 小中学生向けRobloxゲーム制作スクール「MJ」の、SNS運用・集客・経営・教育運営を統合するプラットフォーム。
 
-> **現在の状態: Phase 1（共通基盤）完了**
-> 画面はOverviewとSettingsのみ実装済みです。Social・Marketing・Analyticsなどは **Coming Soon** で、まだ使えません。
-> Supabase・OpenAIは **未接続** です（下記「セットアップ」で接続します）。
+> **現在の状態: Phase 2（SNS運用）完了**
+> 実装済み: Overview・Social・Content Planner・Settings。Marketing・Analytics・AI Insights などは **Coming Soon** です。
+> Supabase・OpenAIは **未接続** です（下記「セットアップ」で接続します）。経営指標（問い合わせ・入会・売上）はまだ実装・検証されていません。
 
-## できること（Phase 1）
+## できること
+
+**Phase 2（SNS運用）**
+
+- SNSアカウント・投稿テーマの管理
+- 投稿の登録（テーマ・形式・フック・CTA・公開日時・制作時間・元の企画・追跡コード）
+- 実績の時系列記録（24時間後・72時間後・7日後のプリセット、未記録 / 未取得 / 非対応 / 実測0 の区別）
+- 投稿ごとの成長推移グラフと履歴
+- SNSダッシュボード（プラットフォーム・テーマ・形式・時間帯・CTA別の中央値、件数・欠損・信頼度の表示）
+- CSVエクスポート（式インジェクション対策）・実績のCSVインポート（全行を検証してから取り込み）
+- Content Planner（カンバン・カレンダー、企画の仮説と投稿結果の比較、振り返り）
+- 施策・AI提案を記録するテーブル（画面は Phase 5）
+
+**Phase 1（共通基盤）**
 
 - サイドバー付きの共通レイアウト（Light / Dark / システム設定、レスポンシブ）
 - Supabase Auth によるログイン（パスワード / メールリンク、招待制）
@@ -25,8 +38,11 @@ Vite / React / TypeScript (strict) / Tailwind CSS v4 / shadcn/ui / Recharts / Lu
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173 （未接続モードで起動）
+npm run dev                          # http://localhost:5173 （未接続モードで起動）
+VITE_DEMO_MODE=true npm run dev      # 【サンプル】データで画面を確認するデモ表示（読み取り専用）
 ```
+
+デモ表示のサンプルデータは `src/demo/` にあり、通常のビルドには含まれません（動的 import で除外）。
 
 ## セットアップ（Supabase接続）
 
@@ -83,7 +99,9 @@ service_role / secret キーや `sk-` で始まるキーを `VITE_` 変数に入
 | [docs/analysis-methods.md](docs/analysis-methods.md) | データ量に応じた分析手法 |
 | [docs/decision-log.md](docs/decision-log.md) | 技術判断の記録 |
 | [docs/ai-evaluation.md](docs/ai-evaluation.md) | AI回答の評価設計 |
+| [docs/decision-support-design.md](docs/decision-support-design.md) | 経営判断支援への拡張設計（SNS分析と経営分析の区別） |
 | [docs/phase-1-report.md](docs/phase-1-report.md) | Phase 1 の実装報告 |
+| [docs/phase-2-report.md](docs/phase-2-report.md) | Phase 2 の実装報告 |
 
 ## データの取り扱い
 
