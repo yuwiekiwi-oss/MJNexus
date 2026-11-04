@@ -21,16 +21,23 @@ describe('KPIカタログ', () => {
     for (const k of KPIS.filter((x) => x.unit === 'percent')) expect(k.denominator).not.toBe('')
   })
 
-  it('「実装済み」のSNS指標は、SQLビューに対応する列が実在する', () => {
+  it('「実装済み」の指標は、SQLのビューまたは関数に対応する列が実在する', () => {
     for (const k of KPIS.filter((x) => x.status === 'implemented')) {
       const [view, column] = k.source.split('.')
-      expect(sql, `${k.id}: view ${view}`).toContain(`create view public.${view}`)
+      expect(
+        sql.includes(`create view public.${view}`) || sql.includes(`create or replace function public.${view}(`),
+        `${k.id}: view or function ${view}`,
+      ).toBe(true)
       expect(sql, `${k.id}: column ${column}`).toMatch(new RegExp(`\\b${column}\\b`))
     }
   })
 
-  it('経営指標は Phase 2 時点ではまだ実装されていない（未検証）', () => {
-    expect(KPIS.filter((k) => k.domain === 'business').every((k) => k.status === 'planned')).toBe(true)
+  it('Phase 3 で集客ファネルの経営指標を実装し、売上・利益（Phase 4）は未実装のまま', () => {
+    const status = (id: string) => getKpi(id).status
+    for (const id of ['inquiries', 'trial_booking_rate', 'conversion_inquiry_to_enrollment', 'cpa', 'cac']) {
+      expect(status(id), id).toBe('implemented')
+    }
+    for (const id of ['roas', 'monthly_revenue', 'operating_margin']) expect(status(id), id).toBe('planned')
   })
 
   it('値の表示', () => {

@@ -1,5 +1,8 @@
 import { createBrowserRouter, createMemoryRouter, type RouteObject } from 'react-router'
 import { AppShell } from '@/components/layout/app-shell'
+import { InquiryDetailPage } from '@/features/marketing/inquiry-detail-page'
+import { InquiryFormPage } from '@/features/marketing/inquiry-form-page'
+import { MarketingPage } from '@/features/marketing/marketing-page'
 import { ContentPlannerPage } from '@/features/content-planner/content-planner-page'
 import { PostDetailPage } from '@/features/social/post-detail-page'
 import { PostFormPage } from '@/features/social/post-form-page'
@@ -34,6 +37,9 @@ export const routes: RouteObject[] = [
       { path: 'social/posts/:id', element: <PostDetailPage /> },
       { path: 'social/posts/:id/edit', element: <PostFormPage /> },
       { path: 'content-planner', element: <ContentPlannerPage /> },
+      { path: 'marketing', element: <MarketingPage /> },
+      { path: 'marketing/inquiries/new', element: <InquiryFormPage /> },
+      { path: 'marketing/inquiries/:id', element: <InquiryDetailPage /> },
       ...comingSoonRoutes,
       { path: '*', element: <NotFoundPage /> },
     ],

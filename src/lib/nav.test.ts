@@ -19,18 +19,19 @@ describe('navigation', () => {
     ])
   })
 
-  it('実装済みは Overview・Social・Content Planner・Settings のみ（Phase 2 時点）', () => {
+  it('実装済みは Overview・Social・Content Planner・Marketing・Settings のみ（Phase 3 時点）', () => {
     expect(ALL_NAV_ITEMS.filter((i) => i.status === 'available').map((i) => i.id)).toEqual([
       'overview',
       'social',
       'content-planner',
+      'marketing',
       'settings',
     ])
   })
 
-  it('Coming Soon の項目は Phase 2 以降で、予定機能が書かれている', () => {
+  it('Coming Soon の項目は Phase 4 以降で、予定機能が書かれている', () => {
     for (const item of ALL_NAV_ITEMS.filter((i) => i.status === 'coming_soon')) {
-      expect(item.phase).toBeGreaterThanOrEqual(2)
+      expect(item.phase).toBeGreaterThanOrEqual(4)
       expect(item.plannedFeatures.length).toBeGreaterThan(0)
     }
   })

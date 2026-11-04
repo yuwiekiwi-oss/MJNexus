@@ -90,7 +90,7 @@ mj-nexus/
 |---|---|---|
 | 1 | 共通基盤（Vite/React/TS・デザインシステム・レイアウト・Supabase接続・Auth・DBスキーマ・RLS・テスト環境） | **実装済み** |
 | 2 | Social・Content Planner（投稿登録・指標入力・履歴・SNSダッシュボード・CSV）、施策・AI提案の受け皿 | **実装済み** |
-| 3 | Marketing（問い合わせ・体験・ファネル・チャネル別） | 未着手 |
+| 3 | Marketing（問い合わせ・体験・入会・ファネル・チャネル別・集客費用） | **実装済み** |
 | 4 | Finance・Analytics（SQL集計ビュー・Python分析・KPI可視化・Tableau出力） | 未着手 |
 | 5 | AI Insights（OpenAI・Tool Calling・安全な分析ツール・AI評価） | 未着手 |
 | 6 | Students・Staff | 未着手 |

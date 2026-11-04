@@ -14,6 +14,8 @@ export function createFakeSupabase(opts: {
   tables?: Record<string, Row[]>
   signInError?: string | null
   rpcError?: { code: string; message: string } | null
+  /** rpc の戻り値（関数名ごと） */
+  rpcData?: Record<string, unknown>
 }) {
   const calls = {
     signInWithPassword: 0,
@@ -81,6 +83,7 @@ export function createFakeSupabase(opts: {
     rpc: async (fn: string, args: unknown) => {
       calls.rpc.push({ fn, args })
       if (opts.rpcError) return { data: null, error: opts.rpcError }
+      if (opts.rpcData && fn in opts.rpcData) return { data: opts.rpcData[fn], error: null }
       return { data: fn === 'create_organization' ? 'org-id' : 'snapshot-id', error: null }
     },
   }

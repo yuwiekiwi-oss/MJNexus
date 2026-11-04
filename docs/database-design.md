@@ -63,6 +63,9 @@ erDiagram
 | 意思決定 | `initiatives` / `initiative_events` | 施策と実施記録・ベースライン・評価結果（Phase 2で作成） |
 | Social | `social_post_snapshot_kpis`（ビュー） | 記録時点ごとに指標を横に並べ、率を計算（Phase 2） |
 | Social | `social_post_kpis`（ビュー） | 投稿 × 最新記録時点のSNS指標。未記録の投稿も含む（Phase 2） |
+| Marketing | `inquiry_pipeline`（ビュー） | 問い合わせ × チャネル名・投稿名・体験の件数・入会日・進捗（Phase 3） |
+| Marketing | `marketing_funnel()`（関数） | 問い合わせ月コホートのファネル件数・費用（Phase 3） |
+| Marketing | `record_enrollment()`（関数） | 生徒と契約を1トランザクションで作成（Phase 3） |
 
 ## 設計判断
 
@@ -114,7 +117,7 @@ CHECK制約 `(status = 'measured') = (value is not null)` により、「未取�
 | 広告費を「マーケ費用」と「費用」の両方に入力 | 費用は `expense_transactions` に一本化し、`marketing_costs` はビュー |
 | 人件費を稼働記録と費用の両方から計上 | 損益は `expense_transactions(category='labor')` を正とし、稼働記録×時給は「見込み」としてのみ使う |
 | 同じ時点の実績を2回入力 | `unique (post_id, recorded_at)` |
-| 体験の振替で問い合わせが重複カウント | 体験は複数行を許容し、ファネルでは `count(distinct inquiry_id)` で数える（Phase 3） |
+| 体験の振替で問い合わせが重複カウント | 体験は複数行を許容し、ファネルでは問い合わせごとに `exists` で0/1にして数える（Phase 3、テスト済み） |
 
 ### 6. 組織間のデータ混在を防ぐ複合外部キー
 
@@ -130,6 +133,13 @@ CHECK制約 `(status = 'measured') = (value is not null)` により、「未取�
 ### 8. 金額は円の整数
 
 `bigint` で保持し、浮動小数点の丸め誤差を避けます。返金は売上のマイナス金額で表します。
+
+### 9. 集客ファネル（Phase 3）
+
+- `marketing_funnel(p_org, p_from, p_to, p_group)`: 期間内（日本時間の日付）に問い合わせた人を、その後の体験申込・参加・入会・失注で数える。`p_group` は total / channel / attribution / theme / platform。
+- 権限: editor 以上（閲覧者は入会を読めないため、0件と誤表示しないよう拒否）。費用は admin 以上のみ。費用が「権限なし」か「未記録」かは `cost_visible` で区別する。
+- `inquiry_pipeline` は閲覧者に `stage` と `enrolled_on` を NULL で返す（`enrollment_visible = false`）。
+- テスト: `supabase/tests/30_phase3_marketing.sql`（日本時間の期間境界、振替の重複、費用の区分と期間、権限、入会の二重登録・日付の逆転）。
 
 ## RLS（権限）
 

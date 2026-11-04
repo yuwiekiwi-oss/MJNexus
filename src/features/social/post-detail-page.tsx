@@ -134,7 +134,7 @@ function TrackingLink({ post, platform }: { post: SocialPostRow; platform: 'inst
         </div>
       )}
       <p className="text-xs text-muted-foreground">
-        問い合わせフォームでこのパラメータを受け取る仕組みは Phase 3 で実装します。現時点では紐づけは未検証です。
+        問い合わせを登録するとき（Marketing）に流入URLかこの追跡コードを入力すると、この投稿と「追跡リンク」として紐づきます。Webサイトの問い合わせフォームが流入URLを自動で残す仕組みは、サイト側の対応が必要です（未実装）。
       </p>
     </div>
   )

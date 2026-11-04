@@ -4,19 +4,39 @@
  */
 import type { Session } from '@supabase/supabase-js'
 import type { MjSupabaseClient } from '@/lib/supabase'
+import { todayJst } from '@/lib/marketing'
 import { DEMO_ORG_ID, demoAccounts, demoIdeas, demoPostKpis, demoPosts, demoSnapshots, demoThemes } from './demo-data'
+import {
+  demoCampaigns,
+  demoChannels,
+  demoCosts,
+  demoCourses,
+  demoEnrollments,
+  demoFunnel,
+  demoPipeline,
+  demoTrials,
+} from './demo-marketing'
 
 type Row = Record<string, unknown>
 const DEMO_ERROR = { code: 'DEMO', message: 'demo mode' }
 
 const tables: Record<string, Row[]> = {
-  organization_members: [{ role: 'editor', organization_id: DEMO_ORG_ID, organizations: { name: 'MJ（デモ）' } }],
+  // 集客費用・CPA/CAC も確認できるよう、デモは管理者として表示する（書き込みはすべて拒否）
+  organization_members: [{ role: 'admin', organization_id: DEMO_ORG_ID, organizations: { name: 'MJ（デモ）' } }],
   social_accounts: demoAccounts,
   content_themes: demoThemes,
   content_ideas: demoIdeas,
   social_posts: demoPosts,
   social_post_kpis: demoPostKpis,
   social_post_snapshot_kpis: demoSnapshots,
+  marketing_channels: demoChannels,
+  campaigns: demoCampaigns,
+  courses: demoCourses,
+  inquiry_pipeline: demoPipeline,
+  trial_lessons: demoTrials,
+  enrollments: demoEnrollments,
+  inquiry_contacts: [], // 個人情報はサンプルでも作らない
+  marketing_costs: demoCosts,
 }
 
 function builder(table: string) {
@@ -60,5 +80,6 @@ export const demoClient = {
     signOut: async () => ({ error: null }),
   },
   from: builder,
-  rpc: async () => ({ data: null, error: DEMO_ERROR }),
+  rpc: async (fn: string, args: Parameters<typeof demoFunnel>[0]) =>
+    fn === 'marketing_funnel' ? { data: demoFunnel(args, todayJst()), error: null } : { data: null, error: DEMO_ERROR },
 } as unknown as MjSupabaseClient

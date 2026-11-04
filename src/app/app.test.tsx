@@ -17,14 +17,15 @@ describe('Supabase未接続モード', () => {
     const nav = await screen.findByRole('navigation', { name: 'メインメニュー' })
     expect(within(nav).getByRole('link', { name: /Overview/ })).not.toHaveTextContent('Soon')
     expect(within(nav).getByRole('link', { name: /Social/ })).not.toHaveTextContent('Soon')
-    expect(within(nav).getByRole('link', { name: /Marketing/ })).toHaveTextContent('Soon')
-    expect(within(nav).getAllByText('Soon')).toHaveLength(8)
+    expect(within(nav).getByRole('link', { name: /Marketing/ })).not.toHaveTextContent('Soon')
+    expect(within(nav).getByRole('link', { name: /Analytics/ })).toHaveTextContent('Soon')
+    expect(within(nav).getAllByText('Soon')).toHaveLength(7)
   })
 
   it('未実装ページは Coming Soon と予定フェーズを表示する', async () => {
-    renderApp('/marketing')
-    expect(await screen.findByRole('heading', { name: 'Marketing' })).toBeInTheDocument()
-    expect(screen.getByText(/Coming Soon — Phase 3 で実装予定/)).toBeInTheDocument()
+    renderApp('/analytics')
+    expect(await screen.findByRole('heading', { name: 'Analytics' })).toBeInTheDocument()
+    expect(screen.getByText(/Coming Soon — Phase 4 で実装予定/)).toBeInTheDocument()
     expect(screen.getByText(/現時点では利用できません/)).toBeInTheDocument()
   })
 

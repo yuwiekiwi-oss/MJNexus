@@ -62,7 +62,7 @@ export function DashboardPanel() {
           ここはSNS分析です <DomainBadge domain="social" />
         </AlertTitle>
         <AlertDescription>
-          プラットフォームの集計値に基づく「どの投稿が見られ、反応されたか」の分析です。問い合わせ・入会・売上へのつながり（経営分析）は Phase 3 以降で、記録した問い合わせをもとに別に集計します。SNSの数字から入会数を推定することはしません。
+          プラットフォームの集計値に基づく「どの投稿が見られ、反応されたか」の分析です。問い合わせ・体験・入会へのつながり（経営分析）は Marketing の「ファネル」で、記録した問い合わせをもとに別に集計しています。SNSの数字から入会数を推定することはしません。
         </AlertDescription>
       </Alert>
 

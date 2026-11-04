@@ -21,9 +21,14 @@ def test_rate_kpis_have_denominator():
             assert k.denominator, k.id
 
 
-def test_business_kpis_are_not_yet_implemented():
-    # Phase 2 時点では経営指標は未実装（未検証）
-    assert all(k.status == "planned" for k in load_catalog().values() if k.domain == "business")
+def test_business_kpi_status_by_phase():
+    # Phase 3: 集客ファネルは実装済み（SQL関数 marketing_funnel）。売上・利益は Phase 4 で未実装
+    catalog = load_catalog()
+    for kid in ("inquiries", "trial_booking_rate", "conversion_inquiry_to_enrollment", "cpa", "cac"):
+        assert catalog[kid].status == "implemented", kid
+        assert catalog[kid].source.startswith("marketing_funnel."), kid
+    for kid in ("roas", "monthly_revenue", "operating_margin"):
+        assert catalog[kid].status == "planned", kid
 
 
 def test_get_kpi_unknown():

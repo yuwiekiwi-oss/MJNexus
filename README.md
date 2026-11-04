@@ -2,11 +2,19 @@
 
 **School Intelligence Platform** — 小中学生向けRobloxゲーム制作スクール「MJ」の、SNS運用・集客・経営・教育運営を統合するプラットフォーム。
 
-> **現在の状態: Phase 2（SNS運用）完了**
-> 実装済み: Overview・Social・Content Planner・Settings。Marketing・Analytics・AI Insights などは **Coming Soon** です。
-> Supabase・OpenAIは **未接続** です（下記「セットアップ」で接続します）。経営指標（問い合わせ・入会・売上）はまだ実装・検証されていません。
+> **現在の状態: Phase 3（集客分析）完了**
+> 実装済み: Overview・Social・Content Planner・Marketing・Settings。Analytics・AI Insights などは **Coming Soon** です。
+> Supabase・OpenAIは **未接続** です（下記「セットアップ」で接続します）。集客の経営指標（問い合わせ〜入会・CPA・CAC）は実装済みですが、**実際の事業データでは未検証** です。売上・利益は未実装です。
 
 ## できること
+
+**Phase 3（集客分析）**
+
+- 問い合わせの登録（流入URLのUTM・追跡コードから投稿を照合、紐づけの確度を記録、連絡先は管理者のみ）
+- 体験授業の申込・参加・欠席・キャンセル、入会（生徒と契約を同時に作成）、失注の記録
+- 集客ファネル（問い合わせ月コホート、全体・チャネル別・紐づけ確度別・投稿のテーマ別・プラットフォーム別）
+- CPA・CAC・問い合わせから入会までの日数（費用の未記録・権限なしを0円とみなさない）
+- 集客チャネル・キャンペーン・コース・集客費用の管理
 
 **Phase 2（SNS運用）**
 
@@ -102,6 +110,7 @@ service_role / secret キーや `sk-` で始まるキーを `VITE_` 変数に入
 | [docs/decision-support-design.md](docs/decision-support-design.md) | 経営判断支援への拡張設計（SNS分析と経営分析の区別） |
 | [docs/phase-1-report.md](docs/phase-1-report.md) | Phase 1 の実装報告 |
 | [docs/phase-2-report.md](docs/phase-2-report.md) | Phase 2 の実装報告 |
+| [docs/phase-3-report.md](docs/phase-3-report.md) | Phase 3 の実装報告 |
 
 ## データの取り扱い
 
