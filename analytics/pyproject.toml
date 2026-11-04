@@ -1,0 +1,25 @@
+[project]
+name = "mj-analytics"
+version = "0.1.0"
+description = "MJ Nexus の分析モジュール（フロントエンドから独立したPythonパッケージ）"
+requires-python = ">=3.11"
+dependencies = [
+  "pandas>=2.2",
+  "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+# 統計分析（Phase 4以降で使用。データ量が十分になってから適用する）
+stats = ["scipy>=1.13", "statsmodels>=0.14"]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["mj_analytics*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
