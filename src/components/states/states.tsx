@@ -1,4 +1,4 @@
-import { CircleDashed, Construction, Inbox, RefreshCw, TriangleAlert } from 'lucide-react'
+import { Inbox, RefreshCw, TriangleAlert } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -67,27 +67,3 @@ export function ErrorState({
   )
 }
 
-/** 未実装機能の表示。実装済みと誤認されないよう、予定フェーズと予定機能を明記する */
-export function ComingSoonState({ phase, features }: { phase: number; features: string[] }) {
-  return (
-    <div className="rounded-xl border border-dashed bg-card/50 p-8">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Construction className="size-4 text-muted-foreground" />
-        Coming Soon — Phase {phase} で実装予定
-      </div>
-      <p className="mt-2 text-sm text-muted-foreground">
-        この機能はまだ実装されていません。下記は予定している機能で、現時点では利用できません。
-      </p>
-      {features.length > 0 && (
-        <ul className="mt-4 space-y-2">
-          {features.map((f) => (
-            <li key={f} className="flex items-start gap-2 text-sm text-muted-foreground">
-              <CircleDashed className="mt-0.5 size-4 shrink-0" />
-              {f}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
-}

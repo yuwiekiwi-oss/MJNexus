@@ -22,7 +22,7 @@ export function StageBadge({ stage }: { stage: InquiryStage | null }) {
   return <Badge variant={STAGE_VARIANT[stage]}>{STAGE_LABEL[stage]}</Badge>
 }
 
-/** 紐づけの確度。追跡リンク以外は参考値 */
+/** きっかけの確度。追跡リンク以外は参考値 */
 export function AttributionBadge({ value }: { value: AttributionMethod }) {
   return (
     <Badge variant={value === 'tracked_link' ? 'default' : 'outline'} title={ATTRIBUTION_HINT[value]}>

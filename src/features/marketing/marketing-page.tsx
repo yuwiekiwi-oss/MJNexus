@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useOrgContext } from '@/features/organization/use-org-context'
-import { dateTimeText } from '@/features/social/format'
+import { dateTimeText } from '@/lib/format'
 import { gradeLabel } from '@/lib/marketing'
 import { usePipeline } from './api'
 import { CostsPanel } from './costs-panel'
@@ -45,14 +45,13 @@ function InquiriesPanel() {
   return (
     <Card className="gap-0 py-0">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-sm tabular-nums">
+        <table className="w-full min-w-[640px] text-sm tabular-nums">
           <thead>
             <tr className="border-b text-left text-xs text-muted-foreground">
               <th className="px-4 py-2.5 font-medium">問い合わせ日時</th>
               <th className="px-3 py-2.5 font-medium">進捗</th>
               <th className="px-3 py-2.5 font-medium">チャネル</th>
-              <th className="px-3 py-2.5 font-medium">紐づけ</th>
-              <th className="px-3 py-2.5 font-medium">関連投稿</th>
+              <th className="px-3 py-2.5 font-medium">きっかけ</th>
               <th className="px-3 py-2.5 font-medium">学年</th>
               <th className="px-4 py-2.5 font-medium">次の体験</th>
             </tr>
@@ -72,7 +71,6 @@ function InquiriesPanel() {
                 <td className="px-3 py-2.5">
                   <AttributionBadge value={r.attribution} />
                 </td>
-                <td className="max-w-56 truncate px-3 py-2.5">{r.post_title ?? <span className="text-muted-foreground">—</span>}</td>
                 <td className="px-3 py-2.5">{gradeLabel(r.child_grade)}</td>
                 <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{r.next_trial_at ? dateTimeText(r.next_trial_at) : '—'}</td>
               </tr>

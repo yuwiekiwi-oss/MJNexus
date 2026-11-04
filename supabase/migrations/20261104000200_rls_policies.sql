@@ -179,13 +179,7 @@ begin
 end;
 $$;
 
--- SNS・企画・集客: 全メンバー閲覧 / editor以上が編集
-select private.apply_org_policies('social_accounts',           'viewer', 'editor');
-select private.apply_org_policies('content_themes',            'viewer', 'editor');
-select private.apply_org_policies('content_ideas',             'viewer', 'editor');
-select private.apply_org_policies('social_posts',              'viewer', 'editor');
-select private.apply_org_policies('social_post_metrics',       'viewer', 'editor');
-select private.apply_org_policies('social_post_metric_values', 'viewer', 'editor');
+-- 集客: 全メンバー閲覧 / editor以上が編集
 select private.apply_org_policies('marketing_channels',        'viewer', 'editor');
 select private.apply_org_policies('campaigns',                 'viewer', 'editor');
 select private.apply_org_policies('inquiries',                 'viewer', 'editor');
@@ -198,26 +192,11 @@ select private.apply_org_policies('courses',                   'viewer', 'admin'
 select private.apply_org_policies('students',                  'editor', 'admin');
 select private.apply_org_policies('enrollments',               'editor', 'admin');
 
--- 個人情報・財務・人件費: admin以上のみ
+-- 個人情報・費用: admin以上のみ
 select private.apply_org_policies('inquiry_contacts',          'admin',  'admin');
-select private.apply_org_policies('student_guardians',         'admin',  'admin');
-select private.apply_org_policies('revenue_transactions',      'admin',  'admin');
 select private.apply_org_policies('expense_transactions',      'admin',  'admin');
-select private.apply_org_policies('staff',                     'admin',  'admin');
-select private.apply_org_policies('staff_work_logs',           'admin',  'admin');
 
 drop function private.apply_org_policies(text, public.member_role, public.member_role);
-
--- AI分析ログ: 本人の質問ログ、または admin 以上が閲覧。更新・削除は不可（監査証跡）
-create policy ai_logs_select on public.ai_analysis_logs
-  for select to authenticated using (
-    private.is_member(organization_id)
-    and (user_id = (select auth.uid()) or private.has_role(organization_id, 'admin'))
-  );
-create policy ai_logs_insert on public.ai_analysis_logs
-  for insert to authenticated with check (
-    private.is_member(organization_id) and user_id = (select auth.uid())
-  );
 
 -- -----------------------------------------------------------------------------
 -- RPC: 組織の作成（作成者を owner にし、初期マスタを登録）
@@ -243,14 +222,6 @@ begin
   insert into public.organizations (name) values (trim(org_name)) returning id into new_org;
   insert into public.organization_members (organization_id, user_id, role)
     values (new_org, uid, 'owner');
-
-  insert into public.content_themes (organization_id, name, sort_order) values
-    (new_org, 'Robloxゲーム完成動画', 10),
-    (new_org, 'AIを使ったゲーム制作過程', 20),
-    (new_org, 'Vibe Codingの紹介', 30),
-    (new_org, 'Roblox Studioのチュートリアル', 40),
-    (new_org, '保護者向け教育コンテンツ', 50),
-    (new_org, '体験授業の案内', 60);
 
   insert into public.marketing_channels (organization_id, code, name, kind, platform) values
     (new_org, 'instagram', 'Instagram（オーガニック）', 'organic_social', 'instagram'),

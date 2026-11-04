@@ -19,7 +19,7 @@ CATALOG_PATH = Path(__file__).resolve().parents[2] / "shared" / "kpi-catalog.jso
 class KpiDefinition:
     id: str
     version: int
-    domain: Literal["social", "business"]
+    domain: Literal["business"]
     name: str
     formula: str
     denominator: str

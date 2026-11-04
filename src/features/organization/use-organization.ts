@@ -39,7 +39,7 @@ export function useMemberships() {
   })
 }
 
-/** 現在の組織（Phase 1 では最初の所属組織。複数組織の切り替えは将来対応） */
+/** 現在の組織（最初の所属組織。複数組織の切り替えは将来対応） */
 export function useCurrentOrganization() {
   const q = useMemberships()
   return { ...q, current: q.data?.[0] ?? null }

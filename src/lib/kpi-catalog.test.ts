@@ -12,9 +12,8 @@ describe('KPIカタログ', () => {
     for (const k of KPIS) expect(k.version).toBeGreaterThanOrEqual(1)
   })
 
-  it('SNS指標と経営指標を区別している', () => {
-    expect(KPIS.some((k) => k.domain === 'social')).toBe(true)
-    expect(KPIS.some((k) => k.domain === 'business')).toBe(true)
+  it('すべて経営指標で、実装済み（未実装の指標はカタログに載せない）', () => {
+    expect(KPIS.every((k) => k.domain === 'business' && k.status === 'implemented')).toBe(true)
   })
 
   it('率の指標には分母が書かれている', () => {
@@ -32,18 +31,16 @@ describe('KPIカタログ', () => {
     }
   })
 
-  it('Phase 3 で集客ファネルの経営指標を実装し、売上・利益（Phase 4）は未実装のまま', () => {
-    const status = (id: string) => getKpi(id).status
+  it('集客ファネルの指標がそろっている', () => {
     for (const id of ['inquiries', 'trial_booking_rate', 'conversion_inquiry_to_enrollment', 'cpa', 'cac']) {
-      expect(status(id), id).toBe('implemented')
+      expect(getKpi(id).source.startsWith('marketing_funnel.'), id).toBe(true)
     }
-    for (const id of ['roas', 'monthly_revenue', 'operating_margin']) expect(status(id), id).toBe('planned')
   })
 
   it('値の表示', () => {
     expect(formatKpiValue('percent', 0.0753)).toBe('7.5%')
     expect(formatKpiValue('jpy', 12345.6)).toBe('¥12,346')
     expect(formatKpiValue('percent', null)).toBe('計算不能')
-    expect(getKpi('save_rate').denominator).toBe('リーチ数')
+    expect(getKpi('cac').denominator).toBe('新規入会数')
   })
 })

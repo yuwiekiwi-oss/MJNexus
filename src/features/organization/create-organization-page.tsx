@@ -27,7 +27,7 @@ export function CreateOrganizationPage() {
           </div>
           <CardTitle className="text-base">スクールを作成</CardTitle>
           <CardDescription>
-            データはスクール（組織）単位で管理されます。作成したあなたがオーナーになります。投稿テーマと集客チャネルの初期設定が登録されます（実績データは登録されません）。
+            データはスクール（組織）単位で管理されます。作成したあなたがオーナーになります。集客チャネルの初期設定が登録されます（実績データは登録されません）。
           </CardDescription>
         </CardHeader>
         <CardContent>

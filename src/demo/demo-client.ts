@@ -5,8 +5,8 @@
 import type { Session } from '@supabase/supabase-js'
 import type { MjSupabaseClient } from '@/lib/supabase'
 import { todayJst } from '@/lib/marketing'
-import { DEMO_ORG_ID, demoAccounts, demoIdeas, demoPostKpis, demoPosts, demoSnapshots, demoThemes } from './demo-data'
 import {
+  DEMO_ORG_ID,
   demoCampaigns,
   demoChannels,
   demoCosts,
@@ -23,12 +23,6 @@ const DEMO_ERROR = { code: 'DEMO', message: 'demo mode' }
 const tables: Record<string, Row[]> = {
   // 集客費用・CPA/CAC も確認できるよう、デモは管理者として表示する（書き込みはすべて拒否）
   organization_members: [{ role: 'admin', organization_id: DEMO_ORG_ID, organizations: { name: 'MJ（デモ）' } }],
-  social_accounts: demoAccounts,
-  content_themes: demoThemes,
-  content_ideas: demoIdeas,
-  social_posts: demoPosts,
-  social_post_kpis: demoPostKpis,
-  social_post_snapshot_kpis: demoSnapshots,
   marketing_channels: demoChannels,
   campaigns: demoCampaigns,
   courses: demoCourses,

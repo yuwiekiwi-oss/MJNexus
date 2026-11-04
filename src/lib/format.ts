@@ -1,8 +1,3 @@
-import { formatMetric, fromRow, type MetricStatus } from '@/lib/metrics'
-
-export function metricText(value: number | null, status: MetricStatus | null): string {
-  return formatMetric(fromRow(status ? { status, value } : null))
-}
 
 export function percentText(v: number | null | undefined): string {
   return v === null || v === undefined ? '—' : `${(Number(v) * 100).toFixed(1)}%`

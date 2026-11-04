@@ -1,14 +1,12 @@
-import { fromLocalInput } from '@/features/social/format'
-import { type AttributionMethod, type LandingParams, normalizeTrackingCode } from '@/lib/marketing'
+import { fromLocalInput } from '@/lib/format'
+import type { AttributionMethod, LandingParams } from '@/lib/marketing'
 import type { Database } from '@/types/database'
 
 export type InquiryFormValues = {
   inquired_at: string // datetime-local（日本時間）
   landing_url: string
-  tracking_code: string
   channel_id: string
   campaign_id: string
-  social_post_id: string
   attribution: AttributionMethod
   child_grade: string
   notes: string
@@ -21,10 +19,8 @@ export function initialInquiryValues(nowLocal: string): InquiryFormValues {
   return {
     inquired_at: nowLocal,
     landing_url: '',
-    tracking_code: '',
     channel_id: '',
     campaign_id: '',
-    social_post_id: '',
     attribution: 'unknown',
     child_grade: '',
     notes: '',
@@ -39,21 +35,19 @@ export type ContactInput = { guardian_name: string; email: string | null; phone:
 
 /**
  * フォーム値 → DBへ送る値。エラーがあれば errors を返す。
- * 追跡リンク（tracked_link）は、追跡コードで投稿が特定できた場合だけ選べる。
+ * 追跡リンク（tracked_link）は、流入URLにUTMがある場合だけ選べる。
  */
 export function buildInquiry(
   v: InquiryFormValues,
-  ctx: { landing: LandingParams | null; trackedPostId: string | null; includeContact: boolean; now?: Date },
+  ctx: { landing: LandingParams | null; includeContact: boolean; now?: Date },
 ): { ok: true; values: Insert; contact: ContactInput | null } | { ok: false; errors: Record<string, string> } {
   const errors: Record<string, string> = {}
   const inquiredAt = fromLocalInput(v.inquired_at)
   if (!inquiredAt) errors.inquired_at = '問い合わせ日時を入力してください'
   else if (Date.parse(inquiredAt) > (ctx.now ?? new Date()).getTime() + 3600_000) errors.inquired_at = '未来の日時は登録できません'
 
-  const code = v.tracking_code.trim() ? normalizeTrackingCode(v.tracking_code) : null
-  if (v.tracking_code.trim() && !code) errors.tracking_code = '英小文字と数字4〜16文字です'
-  if (v.attribution === 'tracked_link' && !ctx.trackedPostId) {
-    errors.attribution = '「追跡リンク」は追跡コードで投稿を照合できた場合だけ選べます'
+  if (v.attribution === 'tracked_link' && !ctx.landing) {
+    errors.attribution = '「追跡リンク」は、UTM付きの流入URLを反映した場合だけ選べます'
   }
   const grade = v.child_grade ? Number(v.child_grade) : null
   if (grade !== null && !(Number.isInteger(grade) && grade >= 1 && grade <= 9)) errors.child_grade = '学年を選んでください'
@@ -71,19 +65,17 @@ export function buildInquiry(
   }
 
   if (Object.keys(errors).length > 0) return { ok: false, errors }
-  const postId = ctx.trackedPostId ?? (v.social_post_id || null)
   return {
     ok: true,
     values: {
       inquired_at: inquiredAt!,
       channel_id: v.channel_id || null,
       campaign_id: v.campaign_id || null,
-      social_post_id: postId,
       attribution: v.attribution,
       utm_source: ctx.landing?.utm_source ?? null,
       utm_medium: ctx.landing?.utm_medium ?? null,
       utm_campaign: ctx.landing?.utm_campaign ?? null,
-      utm_content: ctx.landing?.utm_content ?? code,
+      utm_content: ctx.landing?.utm_content ?? null,
       child_grade: grade,
       notes: v.notes.trim() || null,
     },

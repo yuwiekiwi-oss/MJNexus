@@ -1,44 +1,23 @@
 # MJ Nexus
 
-**School Intelligence Platform** — 小中学生向けRobloxゲーム制作スクール「MJ」の、SNS運用・集客・経営・教育運営を統合するプラットフォーム。
+小中学生向けRobloxゲーム制作スクール「MJ」の **集客管理ツール**。問い合わせから体験授業・入会までを記録し、集客の成果と費用対効果を確認します。
 
-> **現在の状態: Phase 3（集客分析）完了**
-> 実装済み: Overview・Social・Content Planner・Marketing・Settings。Analytics・AI Insights などは **Coming Soon** です。
-> Supabase・OpenAIは **未接続** です（下記「セットアップ」で接続します）。集客の経営指標（問い合わせ〜入会・CPA・CAC）は実装済みですが、**実際の事業データでは未検証** です。売上・利益は未実装です。
+> **現在の状態**
+> できること: 問い合わせ・体験・入会の記録と、集客ファネル・集客費用の分析だけです。必要だと分かった機能だけを、その都度追加する方針です。
+> Supabase は **未接続** です（下記「セットアップ」で接続します）。実際の事業データではまだ検証していません。
 
 ## できること
 
-**Phase 3（集客分析）**
-
-- 問い合わせの登録（流入URLのUTM・追跡コードから投稿を照合、紐づけの確度を記録、連絡先は管理者のみ）
-- 体験授業の申込・参加・欠席・キャンセル、入会（生徒と契約を同時に作成）、失注の記録
-- 集客ファネル（問い合わせ月コホート、全体・チャネル別・紐づけ確度別・投稿のテーマ別・プラットフォーム別）
-- CPA・CAC・問い合わせから入会までの日数（費用の未記録・権限なしを0円とみなさない）
+- 問い合わせの登録（流入URLのUTMからチャネル・キャンペーンを自動選択、きっかけの確度を記録、連絡先は管理者のみ）
+- 体験授業の申込・参加・欠席・キャンセル（振替も可）、入会（生徒と契約を同時に作成）、失注の記録
+- 集客ファネル（問い合わせ月コホート。全体・チャネル別・きっかけの確度別）
+- CPA・CAC・問い合わせから入会までの日数（費用が未記録・権限なしのときは0円とみなさない）
 - 集客チャネル・キャンペーン・コース・集客費用の管理
-
-**Phase 2（SNS運用）**
-
-- SNSアカウント・投稿テーマの管理
-- 投稿の登録（テーマ・形式・フック・CTA・公開日時・制作時間・元の企画・追跡コード）
-- 実績の時系列記録（24時間後・72時間後・7日後のプリセット、未記録 / 未取得 / 非対応 / 実測0 の区別）
-- 投稿ごとの成長推移グラフと履歴
-- SNSダッシュボード（プラットフォーム・テーマ・形式・時間帯・CTA別の中央値、件数・欠損・信頼度の表示）
-- CSVエクスポート（式インジェクション対策）・実績のCSVインポート（全行を検証してから取り込み）
-- Content Planner（カンバン・カレンダー、企画の仮説と投稿結果の比較、振り返り）
-- 施策・AI提案を記録するテーブル（画面は Phase 5）
-
-**Phase 1（共通基盤）**
-
-- サイドバー付きの共通レイアウト（Light / Dark / システム設定、レスポンシブ）
-- Supabase Auth によるログイン（パスワード / メールリンク、招待制）
-- 初回ログイン時のスクール（組織）作成
-- 全モジュール分のDBスキーマ、RLS（行レベルの権限制御）、二重計上防止の制約
-- Supabase未接続時の「未接続モード」（画面確認のみ、データなし）
-- テスト環境: Vitest（React）、pytest（Python）、SQLのRLSテスト、GitHub Actions
+- 共通: ログイン（招待制）、スクール（組織）と権限（owner / admin / editor / viewer）、Light / Dark、スマホ表示
 
 ## 技術スタック
 
-Vite / React / TypeScript (strict) / Tailwind CSS v4 / shadcn/ui / Recharts / Lucide / React Router / TanStack Query / Supabase (PostgreSQL, Auth, RLS, Edge Functions) / Python (pandas, NumPy, SciPy, statsmodels) / Vitest / pytest / Cloudflare Pages
+Vite / React / TypeScript (strict) / Tailwind CSS v4 / shadcn/ui / Recharts / Lucide / React Router / TanStack Query / Supabase (PostgreSQL, Auth, RLS) / Python (pandas、KPIカタログとデータ量の確認のみ) / Vitest / pytest / Cloudflare Pages
 
 詳細は [docs/architecture.md](docs/architecture.md)。
 
@@ -74,7 +53,6 @@ VITE_DEMO_MODE=true npm run dev      # 【サンプル】データで画面を�
 |---|---|---|---|
 | `VITE_SUPABASE_URL` | `.env.local` / Cloudflare Pages | SupabaseのURL | 未設定 |
 | `VITE_SUPABASE_ANON_KEY` | `.env.local` / Cloudflare Pages | anon（publishable）キー。公開されても安全な設計（権限はRLSが守る） | 未設定 |
-| `OPENAI_API_KEY` | Supabase Edge Function の Secrets | Phase 5 で使用。**ブラウザ用の変数に入れない** | 未設定（Phase 5） |
 
 service_role / secret キーや `sk-` で始まるキーを `VITE_` 変数に入れると、アプリは起動時に拒否して「設定エラー」を表示します。
 
@@ -87,7 +65,7 @@ service_role / secret キーや `sk-` で始まるキーを `VITE_` 変数に入
 | `npm run typecheck` | TypeScript 型チェック |
 | `npm run lint` | oxlint |
 | `npm test` | Vitest（Reactコンポーネント・ユーティリティ） |
-| `npm run test:py` | pytest（Python分析） |
+| `npm run test:py` | pytest（KPIカタログの整合性など） |
 | `npm run test:db` | マイグレーション + RLSテスト（PostgreSQLが必要。`PGHOST` 等で接続先を指定） |
 | `npm run test:all` | 上記すべて |
 
@@ -101,20 +79,13 @@ service_role / secret キーや `sk-` で始まるキーを `VITE_` 変数に入
 
 | 文書 | 内容 |
 |---|---|
-| [docs/architecture.md](docs/architecture.md) | 全体構成・ディレクトリ・フェーズ・認証フロー |
+| [docs/architecture.md](docs/architecture.md) | 全体構成・ディレクトリ・認証フロー |
 | [docs/database-design.md](docs/database-design.md) | テーブル設計・設計判断・RLS |
 | [docs/kpi-definitions.md](docs/kpi-definitions.md) | 指標の計算式と分母 |
-| [docs/analysis-methods.md](docs/analysis-methods.md) | データ量に応じた分析手法 |
 | [docs/decision-log.md](docs/decision-log.md) | 技術判断の記録 |
-| [docs/ai-evaluation.md](docs/ai-evaluation.md) | AI回答の評価設計 |
-| [docs/decision-support-design.md](docs/decision-support-design.md) | 経営判断支援への拡張設計（SNS分析と経営分析の区別） |
-| [docs/phase-1-report.md](docs/phase-1-report.md) | Phase 1 の実装報告 |
-| [docs/phase-2-report.md](docs/phase-2-report.md) | Phase 2 の実装報告 |
-| [docs/phase-3-report.md](docs/phase-3-report.md) | Phase 3 の実装報告 |
 
 ## データの取り扱い
 
 - 初期状態は空のDBです。架空の実績データは入れません。
 - 生徒は呼び名と学年のみ。連絡先は別テーブルで admin 以上のみ閲覧可能。
-- 実データを Tableau Public に公開しないでください。
-- SNSの非公式スクレイピングは実装しません（公式API連携は将来機能）。
+- 問い合わせのメモには個人を特定できる情報を書かない運用です（画面でも注意を出します）。

@@ -13,7 +13,7 @@ import type {
   MarketingCostRow,
   TrialLessonRow,
 } from '@/types/database'
-import { DEMO_ORG_ID, demoAccounts, demoPosts, demoThemes } from './demo-data'
+export const DEMO_ORG_ID = 'demo-org'
 
 const created = '2026-08-01T00:00:00Z'
 const jst = (d: string, hm = '10:00') => new Date(`${d}T${hm}:00+09:00`).toISOString()
@@ -52,7 +52,6 @@ type Spec = {
   at: string
   ch: string | null
   attr: AttributionMethod
-  post: string | null
   grade: number | null
   trials: [string, TrialStatus][]
   enrolled?: string
@@ -61,21 +60,21 @@ type Spec = {
 
 // 問い合わせ（架空）。9〜10月が中心
 const specs: Spec[] = [
-  { id: 'q01', at: '2026-09-02', ch: 'demo-ch-tt', attr: 'tracked_link', post: 'demo-p1', grade: 5, trials: [['2026-09-07', 'attended']], enrolled: '2026-09-14' },
-  { id: 'q02', at: '2026-09-04', ch: 'demo-ch-ig', attr: 'self_reported', post: 'demo-p2', grade: 4, trials: [['2026-09-12', 'attended']], enrolled: '2026-09-25' },
-  { id: 'q03', at: '2026-09-06', ch: 'demo-ch-ref', attr: 'unknown', post: null, grade: 6, trials: [['2026-09-13', 'attended']], enrolled: '2026-09-20' },
-  { id: 'q04', at: '2026-09-10', ch: 'demo-ch-web', attr: 'unknown', post: null, grade: 3, trials: [['2026-09-19', 'cancelled']], lost: '2026-09-30' },
-  { id: 'q05', at: '2026-09-15', ch: 'demo-ch-tt', attr: 'tracked_link', post: 'demo-p4', grade: 7, trials: [['2026-09-21', 'no_show'], ['2026-09-28', 'attended']], enrolled: '2026-10-05' },
-  { id: 'q06', at: '2026-09-18', ch: 'demo-ch-ads', attr: 'tracked_link', post: null, grade: 5, trials: [['2026-09-26', 'attended']], lost: '2026-10-10' },
-  { id: 'q07', at: '2026-09-22', ch: 'demo-ch-ads', attr: 'tracked_link', post: null, grade: 4, trials: [] },
-  { id: 'q08', at: '2026-09-27', ch: 'demo-ch-ig', attr: 'staff_inferred', post: 'demo-p3', grade: 2, trials: [['2026-10-04', 'attended']], enrolled: '2026-10-18' },
-  { id: 'q09', at: '2026-10-03', ch: 'demo-ch-tt', attr: 'self_reported', post: 'demo-p4', grade: 6, trials: [['2026-10-10', 'attended']], lost: '2026-10-25' },
-  { id: 'q10', at: '2026-10-08', ch: 'demo-ch-ads', attr: 'tracked_link', post: null, grade: 5, trials: [['2026-10-17', 'attended']], enrolled: '2026-10-24' },
-  { id: 'q11', at: '2026-10-14', ch: 'demo-ch-ig', attr: 'tracked_link', post: 'demo-p5', grade: 8, trials: [['2026-10-24', 'cancelled']] },
-  { id: 'q12', at: '2026-10-20', ch: 'demo-ch-tt', attr: 'tracked_link', post: 'demo-p6', grade: 7, trials: [['2026-10-31', 'attended']] },
-  { id: 'q13', at: '2026-10-25', ch: null, attr: 'unknown', post: null, grade: null, trials: [] },
-  { id: 'q14', at: '2026-10-29', ch: 'demo-ch-ig', attr: 'tracked_link', post: 'demo-p7', grade: 5, trials: [['2026-11-08', 'booked']] },
-  { id: 'q15', at: '2026-11-02', ch: 'demo-ch-tt', attr: 'self_reported', post: 'demo-p8', grade: 6, trials: [] },
+  { id: 'q01', at: '2026-09-02', ch: 'demo-ch-tt', attr: 'tracked_link', grade: 5, trials: [['2026-09-07', 'attended']], enrolled: '2026-09-14' },
+  { id: 'q02', at: '2026-09-04', ch: 'demo-ch-ig', attr: 'self_reported', grade: 4, trials: [['2026-09-12', 'attended']], enrolled: '2026-09-25' },
+  { id: 'q03', at: '2026-09-06', ch: 'demo-ch-ref', attr: 'unknown', grade: 6, trials: [['2026-09-13', 'attended']], enrolled: '2026-09-20' },
+  { id: 'q04', at: '2026-09-10', ch: 'demo-ch-web', attr: 'unknown', grade: 3, trials: [['2026-09-19', 'cancelled']], lost: '2026-09-30' },
+  { id: 'q05', at: '2026-09-15', ch: 'demo-ch-tt', attr: 'tracked_link', grade: 7, trials: [['2026-09-21', 'no_show'], ['2026-09-28', 'attended']], enrolled: '2026-10-05' },
+  { id: 'q06', at: '2026-09-18', ch: 'demo-ch-ads', attr: 'tracked_link', grade: 5, trials: [['2026-09-26', 'attended']], lost: '2026-10-10' },
+  { id: 'q07', at: '2026-09-22', ch: 'demo-ch-ads', attr: 'tracked_link', grade: 4, trials: [] },
+  { id: 'q08', at: '2026-09-27', ch: 'demo-ch-ig', attr: 'staff_inferred', grade: 2, trials: [['2026-10-04', 'attended']], enrolled: '2026-10-18' },
+  { id: 'q09', at: '2026-10-03', ch: 'demo-ch-tt', attr: 'self_reported', grade: 6, trials: [['2026-10-10', 'attended']], lost: '2026-10-25' },
+  { id: 'q10', at: '2026-10-08', ch: 'demo-ch-ads', attr: 'tracked_link', grade: 5, trials: [['2026-10-17', 'attended']], enrolled: '2026-10-24' },
+  { id: 'q11', at: '2026-10-14', ch: 'demo-ch-ig', attr: 'tracked_link', grade: 8, trials: [['2026-10-24', 'cancelled']] },
+  { id: 'q12', at: '2026-10-20', ch: 'demo-ch-tt', attr: 'tracked_link', grade: 7, trials: [['2026-10-31', 'attended']] },
+  { id: 'q13', at: '2026-10-25', ch: null, attr: 'unknown', grade: null, trials: [] },
+  { id: 'q14', at: '2026-10-29', ch: 'demo-ch-ig', attr: 'tracked_link', grade: 5, trials: [['2026-11-08', 'booked']] },
+  { id: 'q15', at: '2026-11-02', ch: 'demo-ch-tt', attr: 'self_reported', grade: 6, trials: [] },
 ]
 
 export const demoTrials: TrialLessonRow[] = specs.flatMap((s) =>
@@ -137,7 +136,6 @@ function stageOf(s: Spec): InquiryStage {
 
 export const demoPipeline: InquiryPipelineRow[] = specs
   .map((s): InquiryPipelineRow => {
-    const post = demoPosts.find((p) => p.id === s.post)
     const ch = demoChannels.find((c) => c.id === s.ch)
     const booked = s.trials.filter(([, st]) => st === 'booked').map(([d]) => jst(d, '16:00'))
     return {
@@ -148,14 +146,11 @@ export const demoPipeline: InquiryPipelineRow[] = specs
       channel_name: ch?.name ?? null,
       campaign_id: s.ch === 'demo-ch-ads' ? 'demo-cp-1' : null,
       campaign_name: s.ch === 'demo-ch-ads' ? demoCampaigns[0]!.name : null,
-      social_post_id: post?.id ?? null,
-      post_title: post?.title ?? null,
-      tracking_code: post?.tracking_code ?? null,
       attribution: s.attr,
       utm_source: s.attr === 'tracked_link' ? (ch?.code ?? null) : null,
       utm_medium: s.attr === 'tracked_link' ? 'social' : null,
       utm_campaign: s.ch === 'demo-ch-ads' ? 'autumn_trial' : null,
-      utm_content: s.attr === 'tracked_link' ? (post?.tracking_code ?? null) : null,
+      utm_content: s.attr === 'tracked_link' ? `smp_${s.id}` : null,
       child_grade: s.grade,
       closed_lost_at: s.lost ? jst(s.lost) : null,
       closed_lost_reason: s.lost ? '【サンプル】日程が合わない' : null,
@@ -183,7 +178,6 @@ export function demoFunnel(args: { p_from: string; p_to: string; p_group?: Funne
   const group = args.p_group ?? 'total'
   const inRange = specs.filter((s) => s.at >= args.p_from && s.at <= args.p_to)
   const keyOf = (s: Spec): string => {
-    const post = demoPosts.find((p) => p.id === s.post)
     switch (group) {
       case 'total':
         return 'all'
@@ -191,10 +185,6 @@ export function demoFunnel(args: { p_from: string; p_to: string; p_group?: Funne
         return s.ch ?? '_none'
       case 'attribution':
         return s.attr
-      case 'theme':
-        return post?.theme_id ?? '_none'
-      case 'platform':
-        return demoAccounts.find((a) => a.id === post?.account_id)?.platform ?? '_none'
     }
   }
   const costs = demoCosts.filter((c) => c.occurred_on >= args.p_from && c.occurred_on <= args.p_to)
@@ -205,9 +195,8 @@ export function demoFunnel(args: { p_from: string; p_to: string; p_group?: Funne
 
   const label = (k: string) => {
     if (group === 'total') return '全体'
-    if (k === '_none') return group === 'channel' ? 'チャネル未設定' : '投稿の紐づけなし'
+    if (k === '_none') return 'チャネル未設定'
     if (group === 'channel') return demoChannels.find((c) => c.id === k)?.name ?? k
-    if (group === 'theme') return demoThemes.find((t) => t.id === k)?.name ?? k
     return k
   }
 

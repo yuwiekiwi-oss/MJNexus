@@ -55,7 +55,6 @@ select test.assert_eq((select count(*) from public.profiles), 4, 'profiles auto-
 set role authenticated;
 select test.act_as('00000000-0000-0000-0000-00000000000a');
 insert into test.ids values ('org1', public.create_organization('MJ テスト校'));
-select test.assert_eq((select count(*) from public.content_themes), 6, 'default themes');
 select test.assert_eq((select count(*) from public.marketing_channels), 5, 'default channels');
 
 insert into public.organization_members (organization_id, user_id, role)
@@ -71,7 +70,7 @@ select test.expect_error(
 select test.act_as('00000000-0000-0000-0000-00000000000c');
 insert into test.ids values ('org2', public.create_organization('別の組織'));
 select test.assert_eq((select count(*) from public.organizations), 1, 'org2 owner sees only own org');
-select test.assert_eq((select count(*) from public.content_themes), 6, 'org2 sees only own themes');
+select test.assert_eq((select count(*) from public.marketing_channels), 5, 'org2 sees only own channels');
 select test.assert_eq((select count(*) from public.organization_members), 1, 'org2 sees only own members');
 
 -- 他組織のメンバーを勝手に追加できない
@@ -82,88 +81,29 @@ select test.expect_error(
   '42501', 'cannot join other org');
 
 -- ---------------------------------------------------------------------------
--- editor: SNSデータを登録できる
+-- editor: 集客データを登録できる
 -- ---------------------------------------------------------------------------
 select test.act_as('00000000-0000-0000-0000-00000000000d');
-insert into public.social_accounts (organization_id, platform, handle)
-select v, 'instagram', 'mj_school' from test.ids where k = 'org1'
-returning id as acc \gset
-insert into test.ids values ('acc', :'acc');
-
-insert into public.social_posts (organization_id, account_id, title, format, status, published_at, post_url)
-select o.v, a.v, 'テスト投稿', 'reel', 'published', '2026-11-01 19:00+09', 'https://www.instagram.com/p/test1/'
-from test.ids o, test.ids a where o.k = 'org1' and a.k = 'acc'
-returning id as post \gset
-insert into test.ids values ('post', :'post');
-
--- 公開済みなのに公開日時なし → CHECK違反
+insert into public.campaigns (organization_id, name, utm_campaign)
+select v, 'テスト体験会', 'trial_test' from test.ids where k = 'org1';
 select test.expect_error(
-  format($$insert into public.social_posts (organization_id, account_id, title, format, status)
-           values (%L, %L, 'x', 'reel', 'published')$$,
-         (select v from test.ids where k = 'org1'), :'acc'),
-  '23514', 'published requires published_at');
-
--- スナップショット（24時間後・72時間後）
-insert into public.social_post_metrics (organization_id, post_id, recorded_at)
-values ((select v from test.ids where k = 'org1'), :'post', '2026-11-02 19:00+09')
-returning id as snap24 \gset
-insert into public.social_post_metrics (organization_id, post_id, recorded_at)
-values ((select v from test.ids where k = 'org1'), :'post', '2026-11-04 19:00+09')
-returning id as snap72 \gset
-
--- 同じ投稿・同じ記録日時は二重登録できない
+  format($$insert into public.campaigns (organization_id, name, utm_campaign) values (%L, 'dup', 'trial_test')$$,
+         (select v from test.ids where k = 'org1')),
+  '23505', 'utm_campaign unique');
 select test.expect_error(
-  format($$insert into public.social_post_metrics (organization_id, post_id, recorded_at)
-           values (%L, %L, '2026-11-02 19:00+09')$$,
-         (select v from test.ids where k = 'org1'), :'post'),
-  '23505', 'duplicate snapshot');
+  format($$insert into public.marketing_channels (organization_id, code, name, kind) values (%L, 'Bad Code', 'x', 'other')$$,
+         (select v from test.ids where k = 'org1')),
+  '23514', 'channel code format');
 
-insert into public.social_post_metric_values (organization_id, snapshot_id, metric, status, value)
-select v, :'snap24', m.metric::public.social_metric, m.status::public.metric_status, m.value
-from test.ids, (values
-  ('views', 'measured', 120::bigint),
-  ('likes', 'measured', 0::bigint),        -- 実測0
-  ('link_clicks', 'not_collected', null),  -- 未取得
-  ('follows_gained', 'unsupported', null)  -- 非対応
-) as m(metric, status, value)
-where k = 'org1';
-insert into public.social_post_metric_values (organization_id, snapshot_id, metric, status, value)
-select v, :'snap72', 'views', 'measured', 300 from test.ids where k = 'org1';
-
--- 実測なのに値なし / 未取得なのに値あり → CHECK違反（0で埋めない）
-select test.expect_error(
-  format($$insert into public.social_post_metric_values (organization_id, snapshot_id, metric, status, value)
-           values (%L, %L, 'shares', 'measured', null)$$, (select v from test.ids where k = 'org1'), :'snap24'),
-  '23514', 'measured requires value');
-select test.expect_error(
-  format($$insert into public.social_post_metric_values (organization_id, snapshot_id, metric, status, value)
-           values (%L, %L, 'shares', 'not_collected', 0)$$, (select v from test.ids where k = 'org1'), :'snap24'),
-  '23514', 'not_collected must not have value');
-select test.expect_error(
-  format($$insert into public.social_post_metric_values (organization_id, snapshot_id, metric, status, value)
-           values (%L, %L, 'shares', 'measured', -1)$$, (select v from test.ids where k = 'org1'), :'snap24'),
-  '23514', 'negative metric');
-
--- 最新値ビュー: views は72時間後の300、likes は24時間後の0（実測0として残る）
-select test.assert_eq((select value from public.social_post_latest_metric_values
-                       where post_id = :'post' and metric = 'views'), 300, 'latest views');
-select test.assert_eq((select value from public.social_post_latest_metric_values
-                       where post_id = :'post' and metric = 'likes'), 0, 'latest likes is measured zero');
-select test.assert_eq((select count(*) from public.social_post_latest_metric_values
-                       where post_id = :'post' and status = 'measured'), 2, 'only measured rows have values');
-select test.assert_eq((select hours_since_publish::bigint from public.social_post_latest_metric_values
-                       where post_id = :'post' and metric = 'views'), 72, 'hours since publish');
-
--- editor は財務・個人情報を見られない／書けない
-select test.assert_eq((select count(*) from public.revenue_transactions), 0, 'editor cannot read revenue');
+-- editor は費用・個人情報を見られない／書けない
 select test.expect_error(
   format($$insert into public.expense_transactions (organization_id, occurred_on, category, amount_jpy)
            values (%L, '2026-11-01', 'ad_spend', 1000)$$, (select v from test.ids where k = 'org1')),
   '42501', 'editor cannot write expenses');
 
 -- 問い合わせ（editor可）と連絡先（admin以上のみ）
-insert into public.inquiries (organization_id, inquired_at, attribution, social_post_id)
-select v, '2026-11-03 10:00+09', 'self_reported', :'post' from test.ids where k = 'org1'
+insert into public.inquiries (organization_id, inquired_at, attribution)
+select v, '2026-11-03 10:00+09', 'self_reported' from test.ids where k = 'org1'
 returning id as inq \gset
 insert into test.ids values ('inq', :'inq');
 select test.expect_error(
@@ -175,25 +115,24 @@ select test.expect_error(
 -- viewer: 閲覧のみ
 -- ---------------------------------------------------------------------------
 select test.act_as('00000000-0000-0000-0000-00000000000b');
-select test.assert_eq((select count(*) from public.social_posts), 1, 'viewer can read posts');
+select test.assert_eq((select count(*) from public.inquiries), 1, 'viewer can read inquiries');
 select test.expect_error(
-  format($$insert into public.social_accounts (organization_id, platform, handle)
-           values (%L, 'tiktok', 'mj_tt')$$, (select v from test.ids where k = 'org1')),
+  format($$insert into public.inquiries (organization_id, inquired_at) values (%L, now())$$,
+         (select v from test.ids where k = 'org1')),
   '42501', 'viewer cannot insert');
-with u as (update public.social_posts set title = 'hacked' returning 1)
+with u as (update public.inquiries set notes = 'hacked' returning 1)
 select test.assert_eq((select count(*) from u), 0, 'viewer update affects 0 rows');
 
 -- ---------------------------------------------------------------------------
 -- 他組織からは見えない・参照できない
 -- ---------------------------------------------------------------------------
 select test.act_as('00000000-0000-0000-0000-00000000000c');
-select test.assert_eq((select count(*) from public.social_posts), 0, 'org2 cannot see org1 posts');
-select test.assert_eq((select count(*) from public.social_post_latest_metric_values), 0, 'view respects RLS');
--- 他組織のアカウントIDを使った投稿は複合外部キーで拒否される
+select test.assert_eq((select count(*) from public.inquiries), 0, 'org2 cannot see org1 inquiries');
+-- 他組織の問い合わせIDを使った体験は複合外部キーで拒否される
 select test.expect_error(
-  format($$insert into public.social_posts (organization_id, account_id, title, format)
-           values (%L, %L, 'x', 'reel')$$, (select v from test.ids where k = 'org2'), (select v from test.ids where k = 'acc')),
-  '23503', 'cross-org account reference');
+  format($$insert into public.trial_lessons (organization_id, inquiry_id, booked_at, scheduled_at)
+           values (%L, %L, now(), now())$$, (select v from test.ids where k = 'org2'), (select v from test.ids where k = 'inq')),
+  '23503', 'cross-org inquiry reference');
 -- organization_id を他組織に偽装しての書き込みはRLSで拒否
 select test.expect_error(
   format($$insert into public.inquiries (organization_id, inquired_at) values (%L, now())$$,
@@ -201,7 +140,7 @@ select test.expect_error(
   '42501', 'cannot write into other org');
 
 -- ---------------------------------------------------------------------------
--- owner: 財務・入会の二重計上防止
+-- owner: 入会の二重計上防止・費用の区分
 -- ---------------------------------------------------------------------------
 select test.act_as('00000000-0000-0000-0000-00000000000a');
 insert into public.inquiry_contacts (organization_id, inquiry_id, guardian_name, email)
@@ -221,14 +160,6 @@ select test.expect_error(
          (select v from test.ids where k = 'org1'), :'student', :'course', :'inq'),
   '23505', 'one enrollment per inquiry');
 
-insert into public.revenue_transactions (organization_id, occurred_on, category, amount_jpy, enrollment_id, billing_month)
-select v, '2026-11-10', 'tuition', 12000, :'enr', '2026-11-01' from test.ids where k = 'org1';
-select test.expect_error(
-  format($$insert into public.revenue_transactions (organization_id, occurred_on, category, amount_jpy, enrollment_id, billing_month)
-           values (%L, '2026-11-11', 'tuition', 12000, %L, '2026-11-01')$$,
-         (select v from test.ids where k = 'org1'), :'enr'),
-  '23505', 'tuition once per month');
-
 insert into public.expense_transactions (organization_id, occurred_on, category, amount_jpy, channel_id)
 select o.v, '2026-11-01', 'ad_spend', 5000, c.id
 from test.ids o join public.marketing_channels c on c.organization_id = o.v and c.code = 'instagram'
@@ -242,10 +173,9 @@ select test.act_as('00000000-0000-0000-0000-00000000000b');
 select test.assert_eq((select count(*) from public.students), 0, 'viewer cannot read students');
 select test.assert_eq((select count(*) from public.inquiry_contacts), 0, 'viewer cannot read contacts');
 
--- editor は生徒を閲覧できるが保護者連絡先は見られない
+-- editor は生徒を閲覧できるが連絡先は見られない
 select test.act_as('00000000-0000-0000-0000-00000000000d');
 select test.assert_eq((select count(*) from public.students), 1, 'editor can read students');
-select test.assert_eq((select count(*) from public.student_guardians), 0, 'editor cannot read guardians');
 select test.assert_eq((select count(*) from public.inquiry_contacts), 0, 'editor cannot read contacts');
 
 -- ---------------------------------------------------------------------------
@@ -253,7 +183,7 @@ select test.assert_eq((select count(*) from public.inquiry_contacts), 0, 'editor
 -- ---------------------------------------------------------------------------
 reset role;
 set role anon;
-select test.expect_error($$select * from public.social_posts$$, '42501', 'anon denied posts');
+select test.expect_error($$select * from public.inquiries$$, '42501', 'anon denied inquiries');
 select test.expect_error($$select * from public.inquiry_contacts$$, '42501', 'anon denied contacts');
 select test.expect_error($$select public.create_organization('x')$$, '42501', 'anon cannot create org');
 reset role;

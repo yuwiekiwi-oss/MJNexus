@@ -3,10 +3,10 @@ import { Badge } from '@/components/ui/badge'
 import { KPI_DOMAIN_LABEL, type KpiDomain } from '@/lib/kpi-catalog'
 import { SAMPLE_LEVEL_LABEL, type SampleLevel } from '@/lib/stats'
 
-/** SNS指標か経営指標かを常に明示する */
+/** 記録に基づく経営指標であることを明示する */
 export function DomainBadge({ domain }: { domain: KpiDomain }) {
   return (
-    <Badge variant={domain === 'social' ? 'secondary' : 'default'} title={domain === 'social' ? 'プラットフォームの集計値に基づく指標' : '問い合わせ・入会・売上などの記録に基づく指標'}>
+    <Badge variant="default" title="問い合わせ・入会・費用の記録に基づく指標">
       {KPI_DOMAIN_LABEL[domain]}
     </Badge>
   )

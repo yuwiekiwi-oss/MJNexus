@@ -7,8 +7,7 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { hasRole, useOrgContext } from '@/features/organization/use-org-context'
-import { CHANNEL_KIND_LABEL, CHANNEL_KINDS, type ChannelKind } from '@/lib/marketing'
-import { PLATFORM_LABEL, PLATFORMS, type SocialPlatform } from '@/lib/social'
+import { CHANNEL_KIND_LABEL, CHANNEL_KINDS, type ChannelKind, PLATFORM_LABEL, PLATFORMS, type SocialPlatform } from '@/lib/marketing'
 import { useCampaigns, useChannels, useCourses, useCreateCampaign, useCreateChannel, useCreateCourse } from './api'
 
 function ChannelsCard() {

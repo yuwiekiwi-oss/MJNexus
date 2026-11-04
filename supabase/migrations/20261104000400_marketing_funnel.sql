@@ -1,6 +1,6 @@
 -- =============================================================================
--- MJ Nexus — Phase 3 集客ファネル
---   ここから「経営指標」。SNSの集計値ではなく、記録した問い合わせ・体験・入会・費用を数える。
+-- MJ Nexus — 集客ファネル
+--   記録した問い合わせ・体験・入会・費用を数える（経営指標）。
 --   定義: docs/kpi-definitions.md / shared/kpi-catalog.json
 -- =============================================================================
 
@@ -66,8 +66,7 @@ grant execute on function public.record_enrollment(uuid, text, smallint, uuid, d
 --     enrolled       … その問い合わせに紐づく入会がある（1問い合わせ1入会はユニーク制約で保証）
 --   率の計算は画面側で行わず、件数をそのまま返す（分母が0なら画面で「計算不能」）
 --
---   p_group: total / channel / attribution / theme / platform
---     theme・platform は問い合わせに紐づいた投稿のテーマ・プラットフォーム（紐づけなしは '_none'）
+--   p_group: total / channel / attribution
 --
 --   権限: editor 以上（viewer は入会データを読めず、入会0件と誤表示されるため拒否）
 --   費用: admin 以上のみ（それ以外は NULL = 権限なし）。費用の記録がなければ NULL = 未記録
@@ -100,7 +99,7 @@ begin
   if not private.has_role(p_org, 'editor') then
     raise exception 'editor role required' using errcode = '42501';
   end if;
-  if p_group not in ('total', 'channel', 'attribution', 'theme', 'platform') then
+  if p_group not in ('total', 'channel', 'attribution') then
     raise exception 'invalid group: %', p_group using errcode = '22023';
   end if;
   if p_to < p_from or p_to - p_from > 731 then
@@ -114,12 +113,8 @@ begin
       i.channel_id,
       i.attribution,
       i.inquired_at,
-      i.closed_lost_at,
-      sp.theme_id,
-      acc.platform
+      i.closed_lost_at
     from public.inquiries i
-    left join public.social_posts sp on sp.id = i.social_post_id
-    left join public.social_accounts acc on acc.id = sp.account_id
     where i.organization_id = p_org
       and (i.inquired_at at time zone 'Asia/Tokyo')::date between p_from and p_to
   ),
@@ -130,8 +125,6 @@ begin
         when 'total' then 'all'
         when 'channel' then coalesce(inq.channel_id::text, '_none')
         when 'attribution' then inq.attribution::text
-        when 'theme' then coalesce(inq.theme_id::text, '_none')
-        when 'platform' then coalesce(inq.platform::text, '_none')
       end as gkey,
       exists (select 1 from public.trial_lessons t where t.inquiry_id = inq.id) as booked,
       exists (select 1 from public.trial_lessons t where t.inquiry_id = inq.id and t.status = 'attended') as attended,
@@ -175,10 +168,8 @@ begin
     k.gkey,
     case
       when p_group = 'total' then '全体'
-      when k.gkey = '_none' and p_group = 'channel' then 'チャネル未設定'
-      when k.gkey = '_none' then '投稿の紐づけなし'
+      when k.gkey = '_none' then 'チャネル未設定'
       when p_group = 'channel' then (select ch.name from public.marketing_channels ch where ch.id::text = k.gkey)
-      when p_group = 'theme' then (select th.name from public.content_themes th where th.id::text = k.gkey)
       else k.gkey
     end,
     coalesce(a.n_inquiries, 0),
@@ -217,9 +208,6 @@ select
   ch.name  as channel_name,
   i.campaign_id,
   cp.name  as campaign_name,
-  i.social_post_id,
-  sp.title as post_title,
-  sp.tracking_code,
   i.attribution,
   i.utm_source,
   i.utm_medium,
@@ -246,7 +234,6 @@ select
 from public.inquiries i
 left join public.marketing_channels ch on ch.id = i.channel_id
 left join public.campaigns cp on cp.id = i.campaign_id
-left join public.social_posts sp on sp.id = i.social_post_id
 left join public.enrollments e on e.inquiry_id = i.id
 left join lateral (
   select

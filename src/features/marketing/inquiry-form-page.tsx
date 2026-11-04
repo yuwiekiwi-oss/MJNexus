@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, LoaderCircle, ShieldAlert } from 'lucide-react'
+import { ArrowLeft, LoaderCircle, ShieldAlert } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { DataGate } from '@/components/data-gate'
@@ -11,8 +11,7 @@ import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { Textarea } from '@/components/ui/textarea'
 import { hasRole, useOrgContext } from '@/features/organization/use-org-context'
-import { usePostKpis } from '@/features/social/api'
-import { toLocalInput } from '@/features/social/format'
+import { toLocalInput } from '@/lib/format'
 import {
   ATTRIBUTION_HINT,
   ATTRIBUTION_LABEL,
@@ -21,63 +20,46 @@ import {
   GRADES,
   gradeLabel,
   looksLikePii,
-  normalizeTrackingCode,
   parseLanding,
 } from '@/lib/marketing'
-import { findPostByTrackingCode, useCampaigns, useChannels, useCreateInquiry } from './api'
+import { useCampaigns, useChannels, useCreateInquiry } from './api'
 import { buildInquiry, initialInquiryValues, type InquiryFormValues } from './inquiry-form-model'
-
-type Tracked = { status: 'idle' } | { status: 'found'; id: string; title: string } | { status: 'not_found' } | { status: 'error'; message: string }
 
 function InquiryForm() {
   const navigate = useNavigate()
-  const { client, orgId, role, canEdit } = useOrgContext()
+  const { role, canEdit } = useOrgContext()
   const isAdmin = hasRole(role, 'admin')
   const channels = useChannels()
   const campaigns = useCampaigns()
-  const posts = usePostKpis()
   const create = useCreateInquiry()
   const [values, setValues] = useState<InquiryFormValues>(() => initialInquiryValues(toLocalInput(new Date().toISOString())))
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [tracked, setTracked] = useState<Tracked>({ status: 'idle' })
-  const landing = parseLanding(values.landing_url)
+  // 「反映」を押した時点の流入URLだけを使う（入力途中のURLで追跡リンク扱いにしない）
+  const [landing, setLanding] = useState<ReturnType<typeof parseLanding>>(null)
 
   const set = (k: keyof InquiryFormValues) => (e: { target: { value: string } }) =>
     setValues((v) => ({ ...v, [k]: e.target.value }))
 
-  /** 流入URLを反映: チャネル（utm_source = チャネルのコード）・キャンペーン・追跡コード */
+  /** 流入URLを反映: チャネル（utm_source = チャネルのコード）・キャンペーン・確度 */
   function applyLanding() {
-    if (!landing) return setErrors((e) => ({ ...e, landing_url: 'UTMパラメータが見つかりません' }))
-    const ch = channels.data?.find((c) => c.code === landing.utm_source)
-    const cp = campaigns.data?.find((c) => c.utm_campaign && c.utm_campaign === landing.utm_campaign)
+    const parsed = parseLanding(values.landing_url)
+    setLanding(parsed)
+    if (!parsed) return setErrors((e) => ({ ...e, landing_url: 'UTMパラメータが見つかりません' }))
+    const ch = channels.data?.find((c) => c.code === parsed.utm_source)
+    const cp = campaigns.data?.find((c) => c.utm_campaign && c.utm_campaign === parsed.utm_campaign)
     setErrors(({ landing_url: _drop, ...rest }) => rest)
     setValues((v) => ({
       ...v,
       channel_id: ch?.id ?? v.channel_id,
       campaign_id: cp?.id ?? v.campaign_id,
-      tracking_code: landing.utm_content ?? v.tracking_code,
+      attribution: 'tracked_link',
     }))
-    if (landing.utm_content) void lookup(landing.utm_content)
-  }
-
-  async function lookup(raw: string) {
-    const code = normalizeTrackingCode(raw)
-    if (!code || !client || !orgId) return setTracked({ status: 'not_found' })
-    try {
-      const post = await findPostByTrackingCode(client, orgId, code)
-      if (!post) return setTracked({ status: 'not_found' })
-      setTracked({ status: 'found', id: post.id, title: post.title })
-      setValues((v) => ({ ...v, attribution: 'tracked_link', social_post_id: '' }))
-    } catch (e) {
-      setTracked({ status: 'error', message: (e as Error).message })
-    }
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
     const r = buildInquiry(values, {
       landing,
-      trackedPostId: tracked.status === 'found' ? tracked.id : null,
       includeContact: isAdmin,
     })
     if (!r.ok) return setErrors(r.errors)
@@ -94,7 +76,7 @@ function InquiryForm() {
         <CardHeader>
           <CardTitle>きっかけ</CardTitle>
           <CardDescription>
-            問い合わせフォームに流入URLが残っていれば貼り付けてください。追跡コードで投稿が特定できると「追跡リンク」（確度が高い紐づけ）になります。
+            問い合わせフォームに流入URLが残っていれば貼り付けて「反映」を押してください。UTMからチャネルとキャンペーンを選び、確度を「追跡リンク」（確度が高い）にします。
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -103,37 +85,23 @@ function InquiryForm() {
           </Field>
           <Field label="流入URL（任意）" htmlFor="landing_url" error={errors.landing_url} hint="utm_source・utm_campaign・utm_content を読み取ります">
             <div className="flex gap-2">
-              <Input id="landing_url" value={values.landing_url} onChange={set('landing_url')} placeholder="https://…?utm_source=instagram&utm_content=…" />
+              <Input
+                id="landing_url"
+                value={values.landing_url}
+                onChange={(e) => {
+                  set('landing_url')(e)
+                  setLanding(null)
+                }} placeholder="https://…?utm_source=instagram&utm_content=…" />
               <Button type="button" variant="outline" onClick={applyLanding} disabled={!values.landing_url.trim()}>
                 反映
               </Button>
             </div>
           </Field>
-          <Field label="追跡コード（任意）" htmlFor="tracking_code" error={errors.tracking_code} className="sm:col-span-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <Input
-                id="tracking_code"
-                value={values.tracking_code}
-                onChange={(e) => {
-                  set('tracking_code')(e)
-                  setTracked({ status: 'idle' })
-                }}
-                className="w-40 font-mono"
-              />
-              <Button type="button" variant="outline" onClick={() => void lookup(values.tracking_code)} disabled={!values.tracking_code.trim()}>
-                投稿を照合
-              </Button>
-              <span className="text-sm" aria-live="polite">
-                {tracked.status === 'found' && (
-                  <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
-                    <Check className="size-4" /> {tracked.title}
-                  </span>
-                )}
-                {tracked.status === 'not_found' && <span className="text-muted-foreground">このコードの投稿は見つかりません</span>}
-                {tracked.status === 'error' && <span className="text-destructive">{tracked.message}</span>}
-              </span>
-            </div>
-          </Field>
+          {landing && (
+            <p className="text-sm text-muted-foreground sm:col-span-2" aria-live="polite">
+              読み取ったUTM: {[landing.utm_source, landing.utm_medium, landing.utm_campaign, landing.utm_content].filter(Boolean).join(' / ')}
+            </p>
+          )}
           <Field label="チャネル" htmlFor="channel_id">
             <NativeSelect id="channel_id" value={values.channel_id} onChange={set('channel_id')}>
               <option value="">未設定</option>
@@ -154,7 +122,7 @@ function InquiryForm() {
               ))}
             </NativeSelect>
           </Field>
-          <Field label="紐づけの確度" htmlFor="attribution" error={errors.attribution} hint={ATTRIBUTION_HINT[values.attribution]}>
+          <Field label="きっかけの確度" htmlFor="attribution" error={errors.attribution} hint={ATTRIBUTION_HINT[values.attribution]}>
             <NativeSelect id="attribution" value={values.attribution} onChange={(e) => setValues((v) => ({ ...v, attribution: e.target.value as AttributionMethod }))}>
               {ATTRIBUTIONS.map((a) => (
                 <option key={a} value={a}>
@@ -163,18 +131,6 @@ function InquiryForm() {
               ))}
             </NativeSelect>
           </Field>
-          {tracked.status !== 'found' && (
-            <Field label="見たという投稿（任意）" htmlFor="social_post_id" hint="本人の回答・推定の場合。集計では参考値として扱います">
-              <NativeSelect id="social_post_id" value={values.social_post_id} onChange={set('social_post_id')}>
-                <option value="">なし</option>
-                {posts.data?.map((p) => (
-                  <option key={p.post_id} value={p.post_id}>
-                    {p.title}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
-          )}
         </CardContent>
       </Card>
 
@@ -216,7 +172,7 @@ function InquiryForm() {
         <Card>
           <CardHeader>
             <CardTitle>連絡先（任意）</CardTitle>
-            <CardDescription>管理者以上だけが閲覧できる別のテーブルに保存します。集計やAIには渡しません。</CardDescription>
+            <CardDescription>管理者以上だけが閲覧できる別のテーブルに保存します。集計には使いません。</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-3">
             <Field label="保護者の呼び名" htmlFor="guardian_name" error={errors.guardian_name}>

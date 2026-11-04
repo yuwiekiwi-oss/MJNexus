@@ -1,6 +1,6 @@
 -- =============================================================================
--- Phase 3 のテスト: 入会記録RPCと集客ファネル
---   10 / 20 のユーザー・組織を前提とする（A=org1 owner, B=viewer, D=editor, C=org2 owner）
+-- 集客ファネルのテスト: 入会記録RPC・ファネル・進捗一覧ビュー
+--   10 のユーザー・組織を前提とする（A=org1 owner, B=viewer, D=editor, C=org2 owner）
 --   他のテストと混ざらないよう 2026年9月 の日付だけを使う
 -- =============================================================================
 \set ON_ERROR_STOP 1
@@ -11,12 +11,11 @@ select test.act_as('00000000-0000-0000-0000-00000000000a');  -- owner
 select v as org from test.ids where k = 'org1' \gset
 select id as ch_ig from public.marketing_channels where organization_id = :'org' and code = 'instagram' \gset
 select id as ch_tt from public.marketing_channels where organization_id = :'org' and code = 'tiktok' \gset
-select v as post from test.ids where k = 'post' \gset
 select id as course from public.courses where organization_id = :'org' and name = 'スタンダード' \gset
 
--- i1: Instagram・追跡リンク経由・体験参加・入会（9/1 → 9/15 = 14日）
-insert into public.inquiries (organization_id, inquired_at, channel_id, attribution, social_post_id)
-values (:'org', '2026-09-01 10:00+09', :'ch_ig', 'tracked_link', :'post') returning id as i1 \gset
+-- i1: Instagram・追跡リンク（UTM）経由・体験参加・入会（9/1 → 9/15 = 14日）
+insert into public.inquiries (organization_id, inquired_at, channel_id, attribution, utm_source, utm_content)
+values (:'org', '2026-09-01 10:00+09', :'ch_ig', 'tracked_link', 'instagram', 'reel01') returning id as i1 \gset
 insert into public.trial_lessons (organization_id, inquiry_id, booked_at, scheduled_at, status, attended_at)
 values (:'org', :'i1', '2026-09-02 10:00+09', '2026-09-08 16:00+09', 'attended', '2026-09-08 17:00+09');
 select public.record_enrollment(:'i1', 'はなこ', 4::smallint, :'course', '2026-09-15') as e1 \gset
@@ -92,13 +91,12 @@ select test.assert_eq((select count(*) from f_ch where group_key = '_none' and g
                       'no-channel group, cost null = not recorded');
 select test.assert_eq((select sum(inquiries) from f_ch)::bigint, 4, 'channel groups sum to total');
 
--- 紐づけ確度別 / プラットフォーム別
+-- 紐づけ確度別
 create temp table f_attr as select * from public.marketing_funnel(:'org', '2026-09-01', '2026-09-30', 'attribution');
 select test.assert_eq((select inquiries from f_attr where group_key = 'tracked_link'), 1, 'attribution tracked_link');
 select test.assert_eq((select count(*) from f_attr where cost_jpy is not null), 0, 'cost only for total/channel');
-create temp table f_pf as select * from public.marketing_funnel(:'org', '2026-09-01', '2026-09-30', 'platform');
-select test.assert_eq((select inquiries from f_pf where group_key = 'instagram'), 1, 'platform via linked post');
-select test.assert_eq((select inquiries from f_pf where group_key = '_none'), 3, 'unlinked posts grouped as _none');
+select test.expect_error(format($$select * from public.marketing_funnel(%L, '2026-09-01', '2026-09-30', 'platform')$$, :'org'),
+  '22023', 'removed group (platform) rejected');
 
 -- ---------------------------------------------------------------------------
 -- 権限
@@ -128,7 +126,7 @@ select test.assert_eq((select count(*) from public.inquiry_pipeline where id = :
 select test.assert_eq((select count(*) from public.inquiry_pipeline where id = :'i2' and stage = 'trial_missed'), 1, 'pipeline: cancelled trial only');
 select test.assert_eq((select count(*) from public.inquiry_pipeline where id = :'i3' and stage = 'closed_lost'), 1, 'pipeline: closed lost');
 select test.assert_eq((select trial_count from public.inquiry_pipeline where id = :'i4'), 2, 'pipeline: trial rows');
-select test.assert_eq((select count(*) from public.inquiry_pipeline where id = :'i1' and channel_name = 'Instagram（オーガニック）' and post_title is not null), 1, 'pipeline: joined names');
+select test.assert_eq((select count(*) from public.inquiry_pipeline where id = :'i1' and channel_name = 'Instagram（オーガニック）' and utm_content = 'reel01'), 1, 'pipeline: joined names');
 select test.act_as('00000000-0000-0000-0000-00000000000b');  -- viewer
 select test.assert_eq((select count(*) from public.inquiry_pipeline where id = :'i1' and stage is null and enrolled_on is null and not enrollment_visible), 1,
                       'pipeline: viewer gets null stage (not "not enrolled")');
@@ -147,4 +145,4 @@ select test.expect_error(format($$select * from public.marketing_funnel(%L, '202
   '42501', 'anon denied');
 reset role;
 
-\echo phase3_marketing: all assertions passed
+\echo marketing_funnel: all assertions passed

@@ -26,7 +26,6 @@ import {
   presetPeriod,
   todayJst,
 } from '@/lib/marketing'
-import { PLATFORM_LABEL, type SocialPlatform } from '@/lib/social'
 import { sampleSizeLevel } from '@/lib/stats'
 import { useFunnel } from './api'
 
@@ -35,7 +34,6 @@ const jpy = (v: number | null) => formatKpiValue('jpy', v)
 
 function groupLabel(group: FunnelGroup, row: FunnelRow): string {
   if (group === 'attribution') return ATTRIBUTION_LABEL[row.group_key as AttributionMethod] ?? row.group_key
-  if (group === 'platform' && row.group_key !== '_none') return PLATFORM_LABEL[row.group_key as SocialPlatform] ?? row.group_key
   return row.group_label ?? row.group_key
 }
 
@@ -123,7 +121,7 @@ export function FunnelPanel() {
           ここは経営分析です <DomainBadge domain="business" />
         </AlertTitle>
         <AlertDescription>
-          記録した問い合わせ・体験・入会・集客費用を数えています（SNSの再生数などは使いません）。率は「期間内に問い合わせた人のうち、その後に体験・入会した人」で計算します（問い合わせ月コホート）。
+          記録した問い合わせ・体験・入会・集客費用を数えています。率は「期間内に問い合わせた人のうち、その後に体験・入会した人」で計算します（問い合わせ月コホート）。
         </AlertDescription>
       </Alert>
 
@@ -215,11 +213,11 @@ export function FunnelPanel() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {(group === 'theme' || group === 'platform' || group === 'attribution') && (
+            {group === 'attribution' && (
               <Alert role="note">
                 <Info />
                 <AlertDescription>
-                  投稿との紐づけは確度が異なります。「追跡リンク」以外（本人の回答・スタッフの推定）は参考値で、その投稿が入会の原因だったとは言えません。紐づけのない問い合わせは「投稿の紐づけなし」にまとめています。
+                  きっかけの記録は確度が異なります。「追跡リンク」以外（本人の回答・スタッフの推定）は参考値です。
                 </AlertDescription>
               </Alert>
             )}

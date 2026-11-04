@@ -1,32 +1,26 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { createFakeSupabase, fakeSession } from '@/test/fake-supabase'
 import { renderApp } from '@/test/render-app'
 
 describe('Supabase未接続モード', () => {
-  it('Overviewを表示し、未接続であることと実績データがないことを明示する', async () => {
+  it('トップは Marketing を表示し、未接続であることを明示する', async () => {
     renderApp('/')
-    expect(await screen.findByRole('heading', { name: 'Overview' })).toBeInTheDocument()
-    expect(screen.getByText(/Supabase未接続/)).toBeInTheDocument()
-    expect(screen.getByText('まだ実績データがありません')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Marketing' })).toBeInTheDocument()
+    expect(screen.getAllByText(/Supabase未接続/).length).toBeGreaterThan(0)
   })
 
-  it('サイドバーの未実装メニューに Soon バッジを表示する', async () => {
+  it('メニューは Marketing と Settings だけ（未実装の機能を並べない）', async () => {
     renderApp('/')
     const nav = await screen.findByRole('navigation', { name: 'メインメニュー' })
-    expect(within(nav).getByRole('link', { name: /Overview/ })).not.toHaveTextContent('Soon')
-    expect(within(nav).getByRole('link', { name: /Social/ })).not.toHaveTextContent('Soon')
-    expect(within(nav).getByRole('link', { name: /Marketing/ })).not.toHaveTextContent('Soon')
-    expect(within(nav).getByRole('link', { name: /Analytics/ })).toHaveTextContent('Soon')
-    expect(within(nav).getAllByText('Soon')).toHaveLength(7)
+    expect(within(nav).getAllByRole('link').map((l) => l.textContent)).toEqual(['Marketing'])
+    expect(screen.queryByText('Soon')).not.toBeInTheDocument()
   })
 
-  it('未実装ページは Coming Soon と予定フェーズを表示する', async () => {
-    renderApp('/analytics')
-    expect(await screen.findByRole('heading', { name: 'Analytics' })).toBeInTheDocument()
-    expect(screen.getByText(/Coming Soon — Phase 4 で実装予定/)).toBeInTheDocument()
-    expect(screen.getByText(/現時点では利用できません/)).toBeInTheDocument()
+  it('削除した機能のURLは Not Found', async () => {
+    renderApp('/social')
+    expect(await screen.findByText('ページが見つかりません')).toBeInTheDocument()
   })
 
   it('存在しないURLは Not Found', async () => {
@@ -36,15 +30,15 @@ describe('Supabase未接続モード', () => {
 
   it('Settings で外部サービスを未接続と表示する（推測で接続済みにしない）', async () => {
     renderApp('/settings')
-    const openai = await screen.findByText('OpenAI API')
-    expect(openai.parentElement).toHaveTextContent('未接続')
+    const sb = await screen.findByText('Supabase', { selector: 'div,span,p' })
+    expect(sb.parentElement).toHaveTextContent('未接続')
   })
 })
 
 describe('Supabase接続モード', () => {
   it('未ログインならログイン画面へリダイレクトする', async () => {
     const { client } = createFakeSupabase({ session: null })
-    const { router } = renderApp('/social', client)
+    const { router } = renderApp('/marketing', client)
     expect(await screen.findByRole('heading', { name: 'ログイン' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/login')
   })
@@ -76,13 +70,13 @@ describe('Supabase接続モード', () => {
     expect(await screen.findByText('スクールを作成')).toBeInTheDocument()
   })
 
-  it('ログイン済みで組織があればOverviewと所属・権限を表示する', async () => {
+  it('ログイン済みで組織があれば Marketing を表示する', async () => {
     const { client } = createFakeSupabase({
       session: fakeSession(),
       memberships: [{ role: 'owner', organization_id: 'org-1', organizations: { name: 'MJ' } }],
     })
     renderApp('/', client)
-    await waitFor(() => expect(screen.getByText('MJ ・ オーナー')).toBeInTheDocument())
+    expect(await screen.findByText('まだ問い合わせが登録されていません')).toBeInTheDocument()
     expect(screen.queryByText(/Supabase未接続/)).not.toBeInTheDocument()
   })
 })

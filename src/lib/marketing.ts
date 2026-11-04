@@ -4,12 +4,17 @@
  * 分母が0、または費用が未記録・権限なしのときは null（= 計算不能）を返し、0 にしない。
  */
 
+/** 集客チャネルが SNS の場合のプラットフォーム */
+export type SocialPlatform = 'instagram' | 'tiktok'
+export const PLATFORMS: SocialPlatform[] = ['instagram', 'tiktok']
+export const PLATFORM_LABEL: Record<SocialPlatform, string> = { instagram: 'Instagram', tiktok: 'TikTok' }
+
 export type AttributionMethod = 'tracked_link' | 'self_reported' | 'staff_inferred' | 'unknown'
 export type TrialStatus = 'booked' | 'attended' | 'no_show' | 'cancelled'
 export type ChannelKind = 'organic_social' | 'paid_social' | 'search' | 'referral' | 'offline' | 'web' | 'other'
 export type MarketingExpenseCategory = 'ad_spend' | 'campaign' | 'content_production'
 export type InquiryStage = 'new' | 'trial_booked' | 'trial_attended' | 'trial_missed' | 'enrolled' | 'closed_lost'
-export type FunnelGroup = 'total' | 'channel' | 'attribution' | 'theme' | 'platform'
+export type FunnelGroup = 'total' | 'channel' | 'attribution'
 
 export const ATTRIBUTIONS: AttributionMethod[] = ['tracked_link', 'self_reported', 'staff_inferred', 'unknown']
 export const ATTRIBUTION_LABEL: Record<AttributionMethod, string> = {
@@ -19,7 +24,7 @@ export const ATTRIBUTION_LABEL: Record<AttributionMethod, string> = {
   unknown: '不明',
 }
 export const ATTRIBUTION_HINT: Record<AttributionMethod, string> = {
-  tracked_link: '追跡コード付きのリンクから来たことが記録で確認できる（確度が高い）',
+  tracked_link: 'UTM付きのリンクから来たことが流入URLで確認できる（確度が高い）',
   self_reported: '「何で知りましたか」への回答（参考値）',
   staff_inferred: '会話などからの推定（参考値）',
   unknown: 'きっかけが分からない',
@@ -59,13 +64,11 @@ export const EXPENSE_CATEGORY_LABEL: Record<MarketingExpenseCategory, string> = 
   content_production: '制作外注費',
 }
 
-export const FUNNEL_GROUPS: FunnelGroup[] = ['total', 'channel', 'attribution', 'platform', 'theme']
+export const FUNNEL_GROUPS: FunnelGroup[] = ['total', 'channel', 'attribution']
 export const FUNNEL_GROUP_LABEL: Record<FunnelGroup, string> = {
   total: '全体',
   channel: 'チャネル別',
-  attribution: '紐づけの確度別',
-  platform: '投稿のプラットフォーム別',
-  theme: '投稿のテーマ別',
+  attribution: 'きっかけの確度別',
 }
 
 /** 学年（DB: 小1=1 … 中3=9） */
@@ -87,10 +90,7 @@ export interface LandingParams {
   utm_content: string | null
 }
 
-/**
- * 問い合わせフォームに記録された流入URL（またはクエリ文字列）からUTMを取り出す。
- * 追跡リンク（Socialで発行）は utm_content に投稿の追跡コードが入る。
- */
+/** 問い合わせフォームに記録された流入URL（またはクエリ文字列）からUTMを取り出す */
 export function parseLanding(input: string): LandingParams | null {
   const s = input.trim()
   if (!s) return null
@@ -113,10 +113,6 @@ export function parseLanding(input: string): LandingParams | null {
   return Object.values(out).some(Boolean) ? out : null
 }
 
-export function normalizeTrackingCode(v: string | null | undefined): string | null {
-  const s = (v ?? '').trim().toLowerCase()
-  return /^[a-z0-9]{4,16}$/.test(s) ? s : null
-}
 
 /** marketing_funnel() の1行 */
 export type FunnelRow = {

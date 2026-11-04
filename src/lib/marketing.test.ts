@@ -6,7 +6,6 @@ import {
   gradeLabel,
   isImmatureCohort,
   looksLikePii,
-  normalizeTrackingCode,
   parseLanding,
   presetPeriod,
   todayJst,
@@ -52,11 +51,11 @@ describe('funnelRates', () => {
     expect(funnelRates(row({ cost_visible: false, cost_jpy: null })).cac).toBeNull()
     expect(costState(row({ cost_jpy: null }), 'channel')).toBe('not_recorded')
     expect(costState(row({ cost_visible: false, cost_jpy: null }), 'total')).toBe('no_permission')
-    expect(costState(row(), 'theme')).toBe('not_applicable')
+    expect(costState(row(), 'attribution')).toBe('not_applicable')
   })
 })
 
-describe('流入URLと追跡コード', () => {
+describe('流入URL', () => {
   it('追跡リンクのURLからUTMを取り出す', () => {
     expect(parseLanding('https://mj.example/?utm_source=instagram&utm_medium=social&utm_content=AB12cd')).toEqual({
       utm_source: 'instagram',
@@ -69,11 +68,6 @@ describe('流入URLと追跡コード', () => {
     expect(parseLanding('')).toBeNull()
   })
 
-  it('追跡コードの形式を検証する', () => {
-    expect(normalizeTrackingCode(' AB12cd ')).toBe('ab12cd')
-    expect(normalizeTrackingCode('ab')).toBeNull()
-    expect(normalizeTrackingCode('ng!code')).toBeNull()
-  })
 })
 
 describe('その他', () => {

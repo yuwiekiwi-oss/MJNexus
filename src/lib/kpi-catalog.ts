@@ -2,11 +2,9 @@ import catalog from '../../shared/kpi-catalog.json'
 
 /**
  * KPIカタログ（shared/kpi-catalog.json）
- * domain:
- *   social   … SNS分析（プラットフォームの集計値）
- *   business … 経営分析（識別できるイベントとお金）
+ * domain: business … 経営指標（記録した問い合わせ・入会・費用に基づく）
  */
-export type KpiDomain = 'social' | 'business'
+export type KpiDomain = 'business'
 export type KpiUnit = 'percent' | 'count' | 'jpy' | 'ratio'
 
 export interface KpiDefinition {
@@ -31,7 +29,6 @@ export function getKpi(id: string): KpiDefinition {
 }
 
 export const KPI_DOMAIN_LABEL: Record<KpiDomain, string> = {
-  social: 'SNS指標',
   business: '経営指標',
 }
 

@@ -2,7 +2,7 @@ import { CircleCheck, CircleDashed, TriangleAlert } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { supabaseEnv } from '@/lib/env'
 
-export type ConnectionState = 'connected' | 'not_connected' | 'error' | 'planned'
+export type ConnectionState = 'connected' | 'not_connected' | 'error'
 
 export interface ConnectionInfo {
   id: string
@@ -25,34 +25,13 @@ export function getConnections(): ConnectionInfo[] {
             state: 'not_connected',
             detail: '.env.local に VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY を設定してください。',
           }
-  return [
-    supabase,
-    {
-      id: 'openai',
-      name: 'OpenAI API',
-      state: 'not_connected',
-      detail: 'Phase 5 で接続。APIキーはSupabase Edge FunctionのSecretsに保存し、ブラウザには置きません。',
-    },
-    {
-      id: 'sns-api',
-      name: 'Instagram / TikTok API',
-      state: 'planned',
-      detail: '将来機能。現在はインサイト画面を確認して手入力・CSVで記録します。',
-    },
-    {
-      id: 'tableau',
-      name: 'Tableau',
-      state: 'planned',
-      detail: 'Phase 4 でCSV・分析用データセットを出力。実データをTableau Publicへ公開しないでください。',
-    },
-  ]
+  return [supabase]
 }
 
-const STATE_UI: Record<ConnectionState, { label: string; variant: 'success' | 'outline' | 'destructive' | 'soon' }> = {
+const STATE_UI: Record<ConnectionState, { label: string; variant: 'success' | 'outline' | 'destructive' }> = {
   connected: { label: '接続済み', variant: 'success' },
   not_connected: { label: '未接続', variant: 'outline' },
   error: { label: '設定エラー', variant: 'destructive' },
-  planned: { label: '将来機能', variant: 'soon' },
 }
 
 export function ConnectionBadge({ state }: { state: ConnectionState }) {

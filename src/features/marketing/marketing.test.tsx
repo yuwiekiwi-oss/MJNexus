@@ -12,7 +12,6 @@ const channels = [
   { id: 'ch-ig', organization_id: 'org-1', code: 'instagram', name: 'Instagram', kind: 'organic_social', platform: 'instagram' },
   { id: 'ch-tt', organization_id: 'org-1', code: 'tiktok', name: 'TikTok', kind: 'organic_social', platform: 'tiktok' },
 ]
-const post = { id: 'p1', organization_id: 'org-1', account_id: 'acc-1', title: 'テスト投稿', tracking_code: 'ab12cd' }
 
 function pipelineRow(o: Record<string, unknown> = {}) {
   return {
@@ -23,9 +22,6 @@ function pipelineRow(o: Record<string, unknown> = {}) {
     channel_name: 'Instagram',
     campaign_id: null,
     campaign_name: null,
-    social_post_id: 'p1',
-    post_title: 'テスト投稿',
-    tracking_code: 'ab12cd',
     attribution: 'tracked_link',
     utm_source: 'instagram',
     utm_medium: 'social',
@@ -72,8 +68,6 @@ function connected(role: string, extra: Parameters<typeof createFakeSupabase>[0]
       marketing_channels: channels,
       campaigns: [],
       courses: [{ id: 'course-1', organization_id: 'org-1', name: 'スタンダード', monthly_fee_jpy: 12000 }],
-      social_posts: [post],
-      social_post_kpis: [],
       inquiry_pipeline: [],
       trial_lessons: [],
       inquiry_contacts: [],
@@ -95,12 +89,12 @@ describe('Marketing: 問い合わせ一覧', () => {
     expect(await screen.findByText('まだ問い合わせが登録されていません')).toBeInTheDocument()
   })
 
-  it('進捗と紐づけの確度を表示し、閲覧者には入会状況を「権限なし」と表示する（未入会と誤表示しない）', async () => {
+  it('進捗ときっかけの確度を表示し、閲覧者には入会状況を「権限なし」と表示する（未入会と誤表示しない）', async () => {
     const { client } = connected('viewer', {
       tables: { inquiry_pipeline: [pipelineRow({ stage: null, enrollment_visible: false, attribution: 'self_reported' })] },
     })
     renderApp('/marketing', client)
-    const row = (await screen.findByText('テスト投稿')).closest('tr')!
+    const row = (await screen.findByText('Instagram')).closest('tr')!
     expect(within(row).getByText('権限なし')).toBeInTheDocument()
     expect(within(row).getByText('本人の回答（参考）')).toBeInTheDocument()
   })
@@ -150,14 +144,13 @@ describe('Marketing: ファネル', () => {
 })
 
 describe('Marketing: 問い合わせの登録', () => {
-  it('流入URLを反映すると、チャネルと追跡コードの投稿を照合し「追跡リンク」で保存する', async () => {
+  it('流入URLを反映すると、UTMからチャネルを選び「追跡リンク」で保存する', async () => {
     const { client, calls } = connected('editor')
     renderApp('/marketing/inquiries/new', client)
     const user = userEvent.setup()
     await user.type(await screen.findByLabelText('流入URL（任意）'), 'https://mj.example/?utm_source=instagram&utm_content=ab12cd')
     await user.click(screen.getByRole('button', { name: '反映' }))
-    expect(await screen.findByText('テスト投稿')).toBeInTheDocument()
-    expect(screen.getByLabelText('紐づけの確度')).toHaveValue('tracked_link')
+    expect(screen.getByLabelText('きっかけの確度')).toHaveValue('tracked_link')
     expect(screen.getByLabelText('チャネル')).toHaveValue('ch-ig')
     // 編集者には連絡先欄を出さない
     expect(screen.queryByLabelText('メールアドレス')).not.toBeInTheDocument()
@@ -166,11 +159,20 @@ describe('Marketing: 問い合わせの登録', () => {
     expect(calls.insert.find((c) => c.table === 'inquiries')?.values).toMatchObject({
       organization_id: 'org-1',
       channel_id: 'ch-ig',
-      social_post_id: 'p1',
       attribution: 'tracked_link',
       utm_source: 'instagram',
       utm_content: 'ab12cd',
     })
+  })
+
+  it('流入URLを反映していなければ「追跡リンク」は保存しない', async () => {
+    const { client, calls } = connected('editor')
+    renderApp('/marketing/inquiries/new', client)
+    const user = userEvent.setup()
+    await user.selectOptions(await screen.findByLabelText('きっかけの確度'), 'tracked_link')
+    await user.click(screen.getByRole('button', { name: '登録する' }))
+    expect(await screen.findByText(/UTM付きの流入URLを反映した場合だけ/)).toBeInTheDocument()
+    expect(calls.insert).toHaveLength(0)
   })
 
   it('メモに連絡先らしき文字列があれば注意を出す', async () => {
@@ -215,22 +217,22 @@ describe('Marketing: 問い合わせ詳細', () => {
 
 describe('フォームのルール', () => {
   const now = new Date('2026-11-04T03:00:00Z')
-  it('追跡リンクは投稿を照合できた場合だけ選べる', () => {
+  it('追跡リンクは流入URLを反映した場合だけ選べる', () => {
     const v = { ...initialInquiryValues('2026-11-04T10:00'), attribution: 'tracked_link' as const }
-    const r = buildInquiry(v, { landing: null, trackedPostId: null, includeContact: false, now })
+    const r = buildInquiry(v, { landing: null, includeContact: false, now })
     expect(r.ok).toBe(false)
   })
 
   it('未来の問い合わせ日時と不正な連絡先は拒否する', () => {
     const v = { ...initialInquiryValues('2026-11-10T10:00'), guardian_name: '', email: 'bad' }
-    const r = buildInquiry(v, { landing: null, trackedPostId: null, includeContact: true, now })
+    const r = buildInquiry(v, { landing: null, includeContact: true, now })
     expect(r.ok).toBe(false)
     if (!r.ok) expect(Object.keys(r.errors).sort()).toEqual(['email', 'guardian_name', 'inquired_at'])
   })
 
   it('連絡先は管理者のときだけ送る', () => {
     const v = { ...initialInquiryValues('2026-11-04T10:00'), guardian_name: '山田さん' }
-    const r = buildInquiry(v, { landing: null, trackedPostId: null, includeContact: false, now })
+    const r = buildInquiry(v, { landing: null, includeContact: false, now })
     expect(r.ok && r.contact).toBe(null)
   })
 

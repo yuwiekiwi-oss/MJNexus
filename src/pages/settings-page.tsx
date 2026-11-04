@@ -67,7 +67,7 @@ export function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>外部サービス接続</CardTitle>
-            <CardDescription>シークレットキーはブラウザに置かず、Supabase Edge Function の Secrets で管理します。</CardDescription>
+            <CardDescription>シークレットキー（service_role など）はブラウザに置きません。</CardDescription>
           </CardHeader>
           <CardContent className="divide-y">
             {getConnections().map((c) => (

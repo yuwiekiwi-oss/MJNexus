@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useOrgContext } from '@/features/organization/use-org-context'
-import { toDbErrorMessage } from '@/features/social/api'
+import { toDbErrorMessage } from '@/lib/db-errors'
 import type { FunnelGroup, FunnelRow, TrialStatus } from '@/lib/marketing'
 import type { Database } from '@/types/database'
 
 type T = Database['public']['Tables']
 type InquiryInsert = Omit<T['inquiries']['Insert'], 'organization_id'>
 
-/** 入会RPCなど、Phase 3 固有のエラー */
+/** 入会RPCなど、集客機能に固有のエラー */
 function marketingError(error: { code?: string; message?: string } | null, fallback: string): string {
   if (error?.code === 'P0002') return '対象のデータが見つかりません（削除済み、または権限がありません）。'
   if (error?.code === '22023' && error.message?.includes('enrolled_on')) return '入会日が問い合わせ日より前になっています。'
@@ -104,22 +104,6 @@ export function useInquiry(id: string | undefined) {
       }
     },
   })
-}
-
-/** 追跡コード → 投稿（同じ組織内で一意） */
-export async function findPostByTrackingCode(
-  client: NonNullable<ReturnType<typeof useOrgContext>['client']>,
-  orgId: string,
-  code: string,
-) {
-  const { data, error } = await client
-    .from('social_posts')
-    .select('id, title, account_id, tracking_code')
-    .eq('organization_id', orgId)
-    .eq('tracking_code', code)
-    .maybeSingle()
-  if (error) throw new Error('追跡コードを確認できませんでした。')
-  return data
 }
 
 export function useCreateInquiry() {

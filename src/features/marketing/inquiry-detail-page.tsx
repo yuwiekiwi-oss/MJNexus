@@ -12,7 +12,7 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
 import { hasRole, useOrgContext } from '@/features/organization/use-org-context'
-import { dateTimeText, fromLocalInput, toLocalInput } from '@/features/social/format'
+import { dateTimeText, fromLocalInput, toLocalInput } from '@/lib/format'
 import { GRADES, gradeLabel, TRIAL_STATUS_LABEL, type TrialStatus } from '@/lib/marketing'
 import type { EnrollmentRow, InquiryPipelineRow, TrialLessonRow } from '@/types/database'
 import { useAddTrial, useCourses, useInquiry, useRecordEnrollment, useSetLost, useUpdateTrialStatus } from './api'
@@ -25,17 +25,7 @@ function Summary({ inq }: { inq: InquiryPipelineRow }) {
     ['問い合わせ日時', dateTimeText(inq.inquired_at)],
     ['チャネル', inq.channel_name ?? '未設定'],
     ['キャンペーン', inq.campaign_name ?? 'なし'],
-    ['紐づけの確度', <AttributionBadge key="a" value={inq.attribution} />],
-    [
-      '関連投稿',
-      inq.social_post_id ? (
-        <Link key="p" to={`/social/posts/${inq.social_post_id}`} className="hover:underline">
-          {inq.post_title}
-        </Link>
-      ) : (
-        'なし'
-      ),
-    ],
+    ['きっかけの確度', <AttributionBadge key="a" value={inq.attribution} />],
     ['学年', gradeLabel(inq.child_grade)],
     ['UTM', [inq.utm_source, inq.utm_medium, inq.utm_campaign, inq.utm_content].filter(Boolean).join(' / ') || 'なし'],
   ]
